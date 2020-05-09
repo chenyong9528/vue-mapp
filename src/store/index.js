@@ -12,6 +12,24 @@ export default new Vuex.Store({
       limit: 10,
       offset: 0,
       loadingStatus: 'none'
+    },
+    rankList: [],
+    showFooter: true,
+    player: {
+      queue: [],
+      queueActive: -1,
+      instance: null,
+      isFull: false,
+      isPlay: false,
+      currentTime: 0,
+      endTime: 1
+    }
+  },
+  getters: {
+    g_rankList: ({ rankList }) => (tag) => {
+      if (tag === 1) return rankList.filter(curr => curr.tracks.length > 0)
+      if (tag === 0) return rankList.filter(curr => curr.tracks.length === 0)
+      return rankList
     }
   },
   mutations: {
@@ -25,6 +43,39 @@ export default new Vuex.Store({
     },
     playMv({ mvRanking: { list } }, { data, index }) {
       list[index].src = data.brs[480]
+    },
+    setFooter(state, isShow) {
+      state.showFooter = isShow
+    },
+    M_player({ player }, { tag, playload }) {
+      const o = {
+        playAudio() {
+          player.isPlay = true
+        },
+        pauseAudio() {
+          player.isPlay = false
+        },
+        updateCurrentTime(currentTime) {
+          player.currentTime = currentTime
+        },
+        initEndTime(endTime) {
+          player.endTime = endTime
+        },
+        pushQueue({ id, name, ar, al, songs }) {
+          player.queue.push({ id, name, ar, al, songs })
+        },
+        switchAudio(current) {
+          player.queueActive = current
+        },
+        playModel(b) {
+          player.isFull = b
+        },
+        initAudioInstance(instance) {
+          player.instance = instance
+        }
+      }
+
+      o[tag](playload)
     }
   },
   actions: {
@@ -54,6 +105,90 @@ export default new Vuex.Store({
       list[index].src = 'loading'
       const { data: { data } } = await axios.get(api.apiMvDetail(id))
       commit('playMv', { data, index })
+    },
+    async loadRankList({ state }) {
+      const { data: { list } } = await axios.get(api.apiRankList())
+      state.rankList = list
+    },
+    async readyPlay({ dispatch, commit, state: { player: { queue } } }, item) {
+      let index = queue.findIndex(curr => curr.id === item.id)
+
+      commit({
+        type: 'M_player',
+        tag: 'playModel',
+        playload: true
+      })
+        
+      if (index === -1) {
+        const { data: { data } } = await axios.get(api.apiAudioUrl(item.id))
+
+        commit({
+          type: 'M_player',
+          tag: 'pushQueue',
+          playload: Object.assign(item, { songs: data })
+        })
+
+        index = queue.length - 1
+      }
+
+      commit({
+        type: 'M_player',
+        tag: 'switchAudio',
+        playload: index
+      })
+
+      dispatch('switchAudio')
+    },
+    switchAudio({ commit, state: { player: { queue, queueActive, instance } } }) {
+      const { songs } = queue[queueActive]
+      const url = songs[0].url
+
+      if (instance) {
+        instance.src = url
+        instance.load()
+      } else {
+        const ad = new Audio(url)
+
+        commit({
+          type: 'M_player',
+          tag: 'initAudioInstance',
+          playload: ad
+        })
+
+        ad.addEventListener('canplay', function() {
+          this.play()
+          commit({
+            type: 'M_player',
+            tag: 'playAudio'
+          })
+        })
+        ad.addEventListener('durationchange', function() {
+          commit({
+            type: 'M_player',
+            tag: 'initEndTime',
+            playload: this.duration
+          })
+        })
+        ad.addEventListener('timeupdate', function() {
+          commit({
+            type: 'M_player',
+            tag: 'updateCurrentTime',
+            playload: this.currentTime
+          })
+        })
+        ad.addEventListener('play', function() {
+          commit({
+            type: 'M_player',
+            tag: 'playAudio'
+          })
+        })
+        ad.addEventListener('pause', function() {
+          commit({
+            type: 'M_player',
+            tag: 'pauseAudio'
+          })
+        })
+      }
     }
   },
   modules: {}

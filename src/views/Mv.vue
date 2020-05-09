@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-page">
+  <div class="container">
     <Tabs :tabsActive="tabsActive" :tabs="tabs" @handleClick="handleClick" />
     <ul class="mv" v-if="mvRanking.list.length">
       <li v-for="(item, index) of mvRanking.list" :key="item.id">
@@ -90,10 +90,6 @@ export default {
 
 </script>
 <style lang="scss">
-.bg-page {
-  padding-bottom: 1.7rem;
-  background-color: #f7f7f7;
-}
 .mv {
   min-height: 100vh;
   box-sizing: border-box;
