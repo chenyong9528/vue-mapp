@@ -42,7 +42,7 @@ export default new Vuex.Store({
       mvRanking.offset = mvRanking.limit
     },
     playMv({ mvRanking: { list } }, { data, index }) {
-      list[index].src = data.brs[480]
+      list[index].src = data.url
     },
     setFooter(state, isShow) {
       state.showFooter = isShow
@@ -103,7 +103,7 @@ export default new Vuex.Store({
     },
     async asyncMvDetail({ commit, state: { mvRanking: { list } } }, { id, index }) {
       list[index].src = 'loading'
-      const { data: { data } } = await axios.get(api.apiMvDetail(id))
+      const { data: { data } } = await axios.get(api.apiMvUrl(id))
       commit('playMv', { data, index })
     },
     async loadRankList({ state }) {

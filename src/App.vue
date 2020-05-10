@@ -1,9 +1,9 @@
 <template>
   <div id="app">
     <router-view />
-    <transition name="slide">
-      <Footer v-show="showFooter" />
-    </transition>
+    
+    <Footer />
+    
     <Player />
   </div>
 </template>

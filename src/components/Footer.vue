@@ -1,5 +1,5 @@
-<template>
-  <footer>
+<template><!-- { transform: `translate3d(0, ${ showFooter ? 0 : '1.5rem' } , 0)` } -->
+  <footer :style="{ bottom: showFooter ? 0 : '-1.5rem' }">
     <router-link to="/" exact>
       <svg class="icon" aria-hidden="true">
         <use xlink:href="#icon-play"></use>
@@ -29,6 +29,15 @@
     </router-link>
   </footer>
 </template>
+<script>
+import { mapState } from 'vuex'
+
+export default {
+  name: 'App',
+  computed: mapState(['showFooter'])
+}
+
+</script>
 <style lang="scss">
 @import '@/assets/style/_mixin.scss';
 
@@ -41,6 +50,8 @@ footer {
   display: flex;
   align-items: center;
   background-color: rgba(#fff, .98);
+  transition: bottom .4s;
+  transition-timing-function: linear;
   &:before {
     @include t-bd(#a4a4a4);
   }
