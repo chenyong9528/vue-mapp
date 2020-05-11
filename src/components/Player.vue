@@ -1,7 +1,7 @@
 <template>
   <div>
     <transition name="slide">
-      <div class="player" v-show="player.isFull">
+      <div class="player" :style="{ '--img': `url(${ getSrc })` }" v-show="player.isFull">
         <header class="player-header">
           <span @click="M_player({ tag: 'playModel', playload: false })">
             <svg class="icon" aria-hidden="true">
@@ -15,8 +15,8 @@
           <span></span>
         </header>
         <div class="player-record">
-          <img src="../assets/images/player_handle.png">
-          <div>
+          <img src="../assets/images/player_handle.png" :style="{ transform: `rotate3d(0, 0, 1, ${ player.isPlay ? 0 : '-30deg' })` }">
+          <div :style="{ 'animation-play-state': player.isPlay ? 'running' : 'paused' }">
             <img :src="getSrc">
           </div>
         </div>
@@ -29,7 +29,7 @@
             <span>{{ diyTime(player.endTime) }}</span>
           </div>
           <div class="player-control-btngroup">
-            <div>
+            <div @click="currentAudio">
               <svg class="icon" aria-hidden="true">
                 <use xlink:href="#icon-backwardfill"></use>
               </svg>
@@ -42,7 +42,7 @@
                 <use xlink:href="#icon-suspended-fill"></use>
               </svg>
             </div>
-            <div name="name">
+            <div @click="nextAudio">
               <svg class="icon" aria-hidden="true">
                 <use xlink:href="#icon-play_forward_fill"></use>
               </svg>
@@ -50,11 +50,11 @@
           </div>
         </section>
       </div>
-    </transition>
-    <section class="player-btmbar" v-show="!player.isFull" :style="{ bottom: showFooter ? '1.5rem' : '0', 'pointer-events': player.queue.length ? false : 'none' }">
-      <img :src="getSrc">
+    </transition><!-- transform: `translate3d(0, ${ showFooter ? '-1.5rem' : 0 }, 0)` -->
+    <section class="player-btmbar" v-show="!player.isFull" :style="{ bottom: showFooter ? '1.5rem' : 0, 'pointer-events': player.queue.length ? 'inherit' : 'none' }" @click="M_player({ tag: 'playModel', playload: true })">
+      <img :src="getSrc" :style="{ 'animation-play-state': player.isPlay ? 'running' : 'paused' }">
       <p>{{ getName }}</p>
-      <svg width="120" height="120" viewBox="0 0 120 120">
+      <svg width="120" height="120" viewBox="0 0 120 120" @click.stop="switchPlay">
         <circle cx="60" cy="60" r="54" fill="none" stroke="#3478F6" stroke-width="12" />
         <circle cx="60" cy="60" r="49" fill="none" stroke="#3478F6" stroke-width="12" stroke-dasharray="307.87" :stroke-dashoffset="getOffset" transform="rotate(-90, 60, 60)" />
         <template v-if="!player.isPlay">
@@ -69,7 +69,7 @@
   </div>
 </template>
 <script>
-import { mapState, mapMutations } from 'vuex'
+import { mapState, mapMutations, mapActions } from 'vuex'
 import img from '../assets/images/player_placeholder.png'
 
 export default {
@@ -99,39 +99,40 @@ export default {
     diyTime: () => (time) => {
       time = parseInt(time)
 
-      return `0${Math.floor(time/60)}:${(time%60)>10?(time%60):`0${time%60}`}`
+      return `0${Math.floor(time/60)}:${(time%60)>9?(time%60):`0${time%60}`}`
     }
   },
   methods: {
     ...mapMutations(['M_player']),
+    ...mapActions(['switchAudio']),
+    currentAudio() {
+      const { queue, queueActive } = this.player
+
+      this.M_player({
+        tag: 'switchAudio',
+        playload: queueActive ? queueActive - 1 : queue.length - 1
+      })
+      this.switchAudio()
+    },
+    nextAudio() {
+      const { queue, queueActive } = this.player
+
+      this.M_player({
+        tag: 'switchAudio',
+        playload: queueActive === queue.length - 1 ? 0 : queueActive + 1
+      })
+      this.switchAudio()
+    },
+    switchPlay() {
+      const { isPlay, instance } = this.player
+
+      isPlay ? instance.pause() : instance.play()
+    }
   }
 }
 
 </script>
 <style lang="scss">
-.chart {
-  position: relative;
-  margin: 80px;
-  width: 220px;
-  height: 220px;
-}
-canvas {
-  display: block;
-  position: absolute;
-  top: 0;
-  left: 0;
-}
-.chart span {
-  color: #555;
-  display: block;
-  line-height: 220px;
-  text-align: center;
-  width: 220px;
-  font-family: sans-serif;
-  font-size: 40px;
-  font-weight: 100;
-  margin-left: 5px;
-}
 .player {
   position: fixed;
   top: 0;
@@ -140,7 +141,7 @@ canvas {
   bottom: 0;
   z-index: 600;
   overflow: hidden;
-  background-image: url(http://p1.music.126.net/lsUCCufnX99LzJXCABqS5g==/109951164957880586.jpg);
+  background-image: var(--img);
   background-repeat: no-repeat;
   background-size: 100% 100%;
   &:after {
@@ -153,7 +154,7 @@ canvas {
     z-index: -1;
     margin: -1.4rem;
     filter: blur(.9rem);
-    background-image: url(http://p1.music.126.net/lsUCCufnX99LzJXCABqS5g==/109951164957880586.jpg);
+    background-image: var(--img);
     background-repeat: no-repeat;
     background-size: 100% 100%;
   }
@@ -205,6 +206,8 @@ canvas {
       top: .2rem;
       left: 5.75rem;
       width: 3.18rem;
+      transition: transform .5s;
+      transform-origin: .47rem .47rem;
     }
     >div {
       width: 10.24rem;
@@ -217,6 +220,7 @@ canvas {
       background-repeat: no-repeat, no-repeat;
       background-position: center center, center center;
       background-size: cover, cover;
+      animation: linearRotate 22s linear infinite;
       img {
         width: 6.37rem;
         height: 6.37rem;
@@ -298,7 +302,8 @@ canvas {
     height: 1.35rem;
     padding: 0 .54rem 0 1.85rem;
     background-color: #fff;
-    transition: bottom .45s;
+    transition: bottom .4s;
+    transition-timing-function: linear;
     img {
       position: absolute;
       left: .18rem;
@@ -308,6 +313,7 @@ canvas {
       height: 1.35rem;
       border-radius: 50%;
       object-fit: cover;
+      animation: linearRotate 22s linear infinite;
     }
     p {
       flex: 1;
@@ -322,6 +328,14 @@ canvas {
       width: .9rem;
       height: .9rem;
     }
+  }
+}
+@keyframes linearRotate {
+  0% {
+    transform: rotate3d(0, 0, 1, 0);
+  }
+  100% {
+    transform: rotate3d(0, 0, 1, 360deg);
   }
 }
 
