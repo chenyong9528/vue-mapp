@@ -42,7 +42,7 @@
                 <use xlink:href="#icon-suspended-fill"></use>
               </svg>
             </div>
-            <div>
+            <div name="name">
               <svg class="icon" aria-hidden="true">
                 <use xlink:href="#icon-play_forward_fill"></use>
               </svg>
