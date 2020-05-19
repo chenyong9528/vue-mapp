@@ -1,10 +1,10 @@
 <template>
-  <div class="tabs-wrapper" ref="wrapper">
+  <div class="tabs-wrapper" ref="wrapper" :style="{ top: `calc(${ top })` }">
     <div class="tabs-container" ref="container">
       <ul class="tabs">
-        <li v-for="(item, index) of tabs" :key="item" :class="{active: index==active}" @click="tabsSwitch(index)">{{ item }}</li>
+        <li v-for="(item, index) of tabs" :key="item" :class="{ active: index === active }" @click="tabsSwitch(index)">{{ item }}</li>
       </ul>
-      <span class="tabs-bar" :style="{left: `${offsetBar}px`}"></span>
+      <span class="tabs-bar" :style="{ transform: `translate3d(${ offsetBar }px, 0, 0)` }"></span>
     </div>
   </div>
 </template>
@@ -23,6 +23,10 @@ export default {
     },
     tabs: {
       type: Array
+    },
+    top: {
+      type: String,
+      default: '0'
     }
   },
   data() {
@@ -44,16 +48,19 @@ export default {
         container: this.$refs.wrapper,
         axis: 'x',
         duration: 350,
+        easing: 'linear',
         offset: this.offsetBar - screenWidth / 2 + 14
       })
 
-      this.$emit('handleClick', index)
+      this.$emit('tabClick', index)
     }
   }
 }
 
 </script>
 <style lang="scss">
+@import '@/assets/style/_mixin.scss';
+
 .tabs-wrapper {
   position: sticky;
   top: 0;
@@ -70,18 +77,21 @@ export default {
   position: relative;
   width: max-content;
   font-size: 0;
+  &:after {
+    @include b-bd(#ebebeb);
+  }
 }
 .tabs-bar {
   position: absolute;
+  left: 0;
   bottom: 0;
   width: 28px;
   height: 4px;
   transition-timing-function: linear;
-  transition: left .35s;
+  transition: transform .35s;
   background-color: var(--T-0);
 }
 .tabs {
-  // display: grid;
   display: flex;
   width: max-content;
   font-size: 15px;

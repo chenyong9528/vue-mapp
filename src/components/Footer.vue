@@ -1,5 +1,5 @@
-<template><!-- { transform: `translate3d(0, ${ showFooter ? 0 : '1.5rem' } , 0)` } -->
-  <footer :style="{ bottom: showFooter ? 0 : '-1.5rem' }">
+<template>
+  <footer :style="{ transform: `translate3d(0, ${ showFooter ? 0 : '1.5rem' }, 0)` }">
     <router-link to="/" exact>
       <svg class="icon" aria-hidden="true">
         <use xlink:href="#icon-play"></use>
@@ -33,7 +33,7 @@
 import { mapState } from 'vuex'
 
 export default {
-  name: 'App',
+  name: 'Footer',
   computed: mapState(['showFooter'])
 }
 
@@ -50,8 +50,7 @@ footer {
   display: flex;
   align-items: center;
   background-color: rgba(#fff, .98);
-  transition: bottom .4s;
-  transition-timing-function: linear;
+  transition: transform .35s;
   &:before {
     @include t-bd(#a4a4a4);
   }

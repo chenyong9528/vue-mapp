@@ -1,5 +1,5 @@
 <template>
-  <div v-show="status != 'none'" class="l-loading">
+  <div class="l-loading" :style="{ visibility: status == 'none' ? 'hidden' : 'visible' }">
     <i v-if="status == 'loading'" class="icon-loading"></i>
     <span>{{ text }}</span>
   </div>

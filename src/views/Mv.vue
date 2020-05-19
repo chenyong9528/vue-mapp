@@ -1,6 +1,6 @@
 <template>
-  <div class="container">
-    <Tabs :tabsActive="tabsActive" :tabs="tabs" @handleClick="handleClick" />
+  <div class="container" style="background-color: #f7f7f7;">
+    <Tabs :tabsActive="tabsActive" :tabs="tabs" @tabClick="tabClick" />
     <ul class="mv" v-if="mvRanking.list.length">
       <li v-for="(item, index) of mvRanking.list" :key="item.id">
         <div class="mv-bd">
@@ -26,8 +26,8 @@
         </div>
       </li>
     </ul>
-    <LoadingLocal :status="mvRanking.loadingStatus" />
     <div ref="hasBottom"></div>
+    <LoadingLocal :status="mvRanking.loadingStatus" />
   </div>
 </template>
 <script>
@@ -59,13 +59,14 @@ export default {
     const io = new IntersectionObserver((entries) => {
       const item = entries[0]
       if (item.isIntersecting) {
+
         if (this.mvRanking.loadingStatus == 'loading') return
 
         this.loadMv({ area: this.tabs[this.tabsActive], type: 0 })
       }
     }, {
       threshold: [1],
-      rootMargin: '0px 0px 40px 0px',
+      rootMargin: '0px 0px -12% 0px',
     })
 
     io.observe(this.$refs.hasBottom)
@@ -81,7 +82,7 @@ export default {
     isComplete(src) {
       return Boolean(src && src != 'loading')
     },
-    handleClick(index) {
+    tabClick(index) {
       this.tabsActive = index
       this.loadMv({ area: this.tabs[index], type: 1 })
     }

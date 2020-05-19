@@ -15,6 +15,7 @@ export default new Vuex.Store({
     },
     rankList: [],
     showFooter: true,
+    globalLoading: false,
     player: {
       queue: [],
       queueActive: -1,
@@ -46,6 +47,9 @@ export default new Vuex.Store({
     },
     setFooter(state, isShow) {
       state.showFooter = isShow
+    },
+    setGLoading(state, isShow) {
+      state.globalLoading = isShow
     },
     M_player({ player }, { tag, playload }) {
       const o = {
@@ -118,6 +122,8 @@ export default new Vuex.Store({
         tag: 'playModel',
         playload: true
       })
+
+      commit('setGLoading', true)
         
       if (index === -1) {
         const { data: { data } } = await axios.get(api.apiAudioUrl(item.id))
@@ -139,7 +145,7 @@ export default new Vuex.Store({
 
       dispatch('switchAudio')
     },
-    switchAudio({ commit, state: { player: { queue, queueActive, instance } } }) {
+    switchAudio({ dispatch, commit, state: { player, player: { queue, queueActive, instance } } }) {
       const { songs } = queue[queueActive]
       const url = songs[0].url
 
@@ -161,6 +167,7 @@ export default new Vuex.Store({
             type: 'M_player',
             tag: 'playAudio'
           })
+          commit('setGLoading', false)
         })
         ad.addEventListener('durationchange', function() {
           commit({
@@ -187,6 +194,17 @@ export default new Vuex.Store({
             type: 'M_player',
             tag: 'pauseAudio'
           })
+        })
+        ad.addEventListener('ended', function() {
+          const { queue, queueActive } = player
+
+          commit({
+            type: 'M_player',
+            tag: 'switchAudio',
+            playload: queueActive === queue.length - 1 ? 0 : queueActive + 1
+          })
+          
+          dispatch('switchAudio')
         })
       }
     }

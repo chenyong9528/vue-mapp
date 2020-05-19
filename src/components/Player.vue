@@ -1,7 +1,7 @@
 <template>
   <div>
     <transition name="slide">
-      <div class="player" :style="{ '--img': `url(${ getSrc })` }" v-show="player.isFull">
+      <div class="player" :style="{ '--img': `url(${ completeImg })` }" v-show="player.isFull" @touchmove.stop.prevent>
         <header class="player-header">
           <span @click="M_player({ tag: 'playModel', playload: false })">
             <svg class="icon" aria-hidden="true">
@@ -9,22 +9,22 @@
             </svg>
           </span>
           <div>
-            <h5>{{ getName }}</h5>
-            <p>{{ getAr }}</p>
+            <h5>{{ getBase('name') }}</h5>
+            <p>{{ getBase('ar') }}</p>
           </div>
           <span></span>
         </header>
         <div class="player-record">
           <img src="../assets/images/player_handle.png" :style="{ transform: `rotate3d(0, 0, 1, ${ player.isPlay ? 0 : '-30deg' })` }">
           <div :style="{ 'animation-play-state': player.isPlay ? 'running' : 'paused' }">
-            <img :src="getSrc">
+            <span :style="{ backgroundImage: `url(${ completeImg })` }"></span>
           </div>
         </div>
         <section class="player-control">
           <div class="player-control-prog">
-            <span>{{ diyTime(player.currentTime) }}</span>
-            <div class="player-control-bar">
-              <div :style="{ width: `${ player.currentTime/player.endTime*100 }%` }"><span></span></div>
+            <span>{{ diyTime(tempTime >= 0 ? tempTime : player.currentTime) }}</span>
+            <div class="player-control-bar" ref="controlBar">
+              <div :style="{ width: `${ getProg }%` }"><span @touchstart="handleStart" @touchmove="handleMove" @touchend="handleEnd"></span></div>
             </div>
             <span>{{ diyTime(player.endTime) }}</span>
           </div>
@@ -50,21 +50,23 @@
           </div>
         </section>
       </div>
-    </transition><!-- transform: `translate3d(0, ${ showFooter ? '-1.5rem' : 0 }, 0)` -->
-    <section class="player-btmbar" v-show="!player.isFull" :style="{ bottom: showFooter ? '1.5rem' : 0, 'pointer-events': player.queue.length ? 'inherit' : 'none' }" @click="M_player({ tag: 'playModel', playload: true })">
-      <img :src="getSrc" :style="{ 'animation-play-state': player.isPlay ? 'running' : 'paused' }">
-      <p>{{ getName }}</p>
-      <svg width="120" height="120" viewBox="0 0 120 120" @click.stop="switchPlay">
-        <circle cx="60" cy="60" r="54" fill="none" stroke="#3478F6" stroke-width="12" />
-        <circle cx="60" cy="60" r="49" fill="none" stroke="#3478F6" stroke-width="12" stroke-dasharray="307.87" :stroke-dashoffset="getOffset" transform="rotate(-90, 60, 60)" />
-        <template v-if="!player.isPlay">
-          <polyline points="49 41 49 79 81.9 60 49 41" stroke="#3478F6" stroke-width="12" stroke-linecap="round" fill="#3478F6" stroke-linejoin="round" />
-        </template>
-        <template v-else>
-          <polyline points="48 38 48 82" stroke="#3478F6" stroke-width="12" stroke-linecap="butt" stroke-linejoin="miter"/>
-          <polyline points="72 38 72 82" stroke="#3478F6" stroke-width="12" stroke-linecap="butt" stroke-linejoin="miter"/>
-        </template>
-      </svg>
+    </transition>
+    <section class="player-btmbar" :style="{ transform: `translate3d(0, ${ showFooter ? '-1.5rem' : 0 }, 0)` }">
+      <div class="player-btmbar-box" :class="{ disabled: !player.queue.length }" @click="M_player({ tag: 'playModel', playload: true })">
+        <span :style="{ backgroundImage: `url(${ completeImg })`, 'animation-play-state': player.isPlay ? 'running' : 'paused' }"></span>
+        <p>{{ getBase('name') }}</p>
+        <svg width="120" height="120" viewBox="0 0 120 120" @click.stop="switchPlay">
+          <circle cx="60" cy="60" r="54" fill="none" stroke="#3478F6" stroke-width="12" />
+          <circle cx="60" cy="60" r="49" fill="none" stroke="#3478F6" stroke-width="12" stroke-dasharray="307.87" :stroke-dashoffset="getOffset" transform="rotate(-90, 60, 60)" />
+          <template v-if="!player.isPlay">
+            <polyline points="49 41 49 79 81.9 60 49 41" stroke="#3478F6" stroke-width="12" stroke-linecap="round" fill="#3478F6" stroke-linejoin="round" />
+          </template>
+          <template v-else>
+            <polyline points="48 38 48 82" stroke="#3478F6" stroke-width="12" stroke-linecap="butt" stroke-linejoin="miter" />
+            <polyline points="72 38 72 82" stroke="#3478F6" stroke-width="12" stroke-linecap="butt" stroke-linejoin="miter" />
+          </template>
+        </svg>
+      </div>
     </section>
   </div>
 </template>
@@ -74,22 +76,38 @@ import img from '../assets/images/player_placeholder.png'
 
 export default {
   name: 'Player',
+  data() {
+    return {
+      tempTime: -1,/* >=0接管player.currentTime */
+      startX: 0,
+      completeImg: img
+    }
+  },
   computed: {
     ...mapState(['showFooter', 'player']),
     getSrc() {
       const { queue, queueActive } = this.player
 
-      return queue.length ? queue[queueActive].al.picUrl : img
+      return queue.length ? queue[queueActive].al.picUrl : false
     },
-    getName() {
-      const { queue, queueActive } = this.player
+    getBase() {
+      return (tag) => {
+        const { queue, queueActive } = this.player
 
-      return queue.length ? queue[queueActive].name : '球球音乐，让生活充满音乐'
+        switch (tag) {
+          case 'name':
+            return queue.length ? queue[queueActive].name : '球球音乐，让生活充满音乐'
+          case 'ar':
+            return queue.length ? queue[queueActive].ar.map(curr => curr.name).join(',') : ''
+          default:
+            return
+        }
+      }
     },
-    getAr() {
-      const { queue, queueActive } = this.player
-      
-      return queue.length ? queue[queueActive].ar.map(curr => curr.name).join(',') : ''
+    getProg() {
+      const { currentTime, endTime } = this.player
+
+      return ((this.tempTime >= 0 ? this.tempTime : currentTime) / endTime * 100).toFixed(2)
     },
     getOffset() {
       const { currentTime, endTime } = this.player
@@ -99,7 +117,7 @@ export default {
     diyTime: () => (time) => {
       time = parseInt(time)
 
-      return `0${Math.floor(time/60)}:${(time%60)>9?(time%60):`0${time%60}`}`
+      return `0${ Math.floor(time / 60) }:${ (time % 60) > 9 ? (time % 60 ): `0${ time % 60 }`}`
     }
   },
   methods: {
@@ -127,6 +145,56 @@ export default {
       const { isPlay, instance } = this.player
 
       isPlay ? instance.pause() : instance.play()
+    },
+    handleStart(e) {
+      const { currentTime } = this.player
+
+      e.target.style.width = '.42rem'
+      e.target.style.height = '.42rem'
+      this.startX = e.touches[0].clientX
+      this.tempTime = currentTime
+    },
+    handleMove(e) {
+      const { width, x } = this.$refs.controlBar.getBoundingClientRect()
+
+      this.handleMove = (e) => {
+        const clientX = e.touches[0].clientX
+        const { endTime } = this.player
+
+        // 处理滑到到边界的问题
+        if (clientX < x) {
+          this.tempTime = 0
+          return
+        }
+        if (clientX > (x + width)) {
+          this.tempTime = endTime
+          return
+        }
+
+        const offset = clientX - this.startX
+        const onePxToTime = 1 / width * endTime
+
+        this.startX = clientX
+        this.tempTime += offset * onePxToTime
+      }
+      this.handleMove(e)
+    },
+    handleEnd(e) {
+      const { instance } = this.player
+      e.target.style.width = '.27rem'
+      e.target.style.height = '.27rem'
+      instance.currentTime = this.tempTime
+      this.tempTime = -1
+    }
+  },
+  watch: {
+    getSrc(n) {
+      const img = new Image()
+      img.src = n
+
+      img.onload = () => {
+        this.completeImg = n
+      }
     }
   }
 }
@@ -157,6 +225,7 @@ export default {
     background-image: var(--img);
     background-repeat: no-repeat;
     background-size: 100% 100%;
+    transition: background-image 1.2s;
   }
   &-header {
     display: flex;
@@ -170,6 +239,7 @@ export default {
       width: .99rem;
       height: .99rem;
       font-size: 0;
+      -webkit-tap-highlight-color: transparent;
       .icon {
         width: 100%;
         height: 100%;
@@ -221,11 +291,15 @@ export default {
       background-position: center center, center center;
       background-size: cover, cover;
       animation: linearRotate 22s linear infinite;
-      img {
+      span {
+        display: block;
         width: 6.37rem;
         height: 6.37rem;
         border-radius: 50%;
-        object-fit: cover;
+        background-repeat: no-repeat;
+        background-position: center center;
+        background-size: cover;
+        transition: background-image 1.2s;
       }
     }
   }
@@ -264,8 +338,9 @@ export default {
           border-radius: 50%;
           background-color: #fff;
           position: absolute;
-          top: calc(50% - .135rem);
-          right: -.135rem;
+          top: 50%;
+          right: 0;
+          transform: translate(50%, -50%);
         }
       }
     }
@@ -287,6 +362,7 @@ export default {
           width: 100%;
           height: 100%;
           color: #d1d1d3;
+          -webkit-tap-highlight-color: transparent;
         }
       }
     }
@@ -297,36 +373,48 @@ export default {
     right: 0;
     bottom: 0;
     z-index: 500;
-    display: flex;
-    align-items: center;
     height: 1.35rem;
-    padding: 0 .54rem 0 1.85rem;
     background-color: #fff;
-    transition: bottom .4s;
-    transition-timing-function: linear;
-    img {
-      position: absolute;
-      left: .18rem;
-      bottom: .17rem;
-      z-index: 2;
-      width: 1.35rem;
-      height: 1.35rem;
-      border-radius: 50%;
-      object-fit: cover;
-      animation: linearRotate 22s linear infinite;
-    }
-    p {
-      flex: 1;
-      width: 0;
-      padding-right: .36rem;
-      font-size: 15px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    svg {
-      width: .9rem;
-      height: .9rem;
+    transition: transform .35s;
+    &-box {
+      display: flex;
+      align-items: center;
+      height: 100%;
+      padding: 0 .54rem 0 1.85rem;
+      &.disabled {
+        pointer-events: none;
+        p, svg {
+          opacity: .4;
+        }
+      }
+      >span {
+        position: absolute;
+        left: .18rem;
+        bottom: .17rem;
+        z-index: 2;
+        width: 1.35rem;
+        height: 1.35rem;
+        border-radius: 50%;
+        background-repeat: no-repeat;
+        background-position: center center;
+        background-size: cover;
+        animation: linearRotate 22s linear infinite;
+        transition: background-image 1.2s;
+      }
+      p {
+        flex: 1;
+        width: 0;
+        padding-right: .36rem;
+        font-size: 15px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      svg {
+        width: .9rem;
+        height: .9rem;
+        -webkit-tap-highlight-color: transparent;
+      }
     }
   }
 }

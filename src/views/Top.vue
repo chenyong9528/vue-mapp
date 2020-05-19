@@ -37,7 +37,7 @@
       <ul class="top-list">
         <li v-for="(item, index) of playlist.tracks" :key="item.id" @click="readyPlay(item)">
           <div class="top-list-rank">
-            <h5>{{ index + 1 }}</h5>
+            <h5 :style="{ color: `${ index < 3 ? '#de3537' : 'var(--G-2)' }` }">{{ index + 1 }}</h5>
             <p><strong>↑</strong>{{ playlist.trackIds[index].ratio ? playlist.trackIds[index].ratio : 1 }}%</p>
           </div>
           <div class="top-list-name">
@@ -65,7 +65,7 @@ export default {
   async created() {
     this.$loading.show()
     const { data: { playlist } } = await axios.get(api.apiTopList(this.idx))
-    this.playlist = playlist
+    this.playlist = Object.freeze(playlist)
     this.$loading.hide()
   },
   methods: {
@@ -171,7 +171,6 @@ export default {
     h5 {
       font-size: 19px;
       font-weight: 500;
-      color: #de3537;
     }
     p {
       min-width: 39px;

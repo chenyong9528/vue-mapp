@@ -1,5 +1,5 @@
 <template>
-<div class="g-loading" @touchmove.stop.prevent v-show="isShow">
+<div class="g-loading" @touchmove.stop.prevent v-show="globalLoading">
   <div class="g-loading-center">
     <i class="icon-loading"></i>
     <p>Loading...</p>
@@ -7,21 +7,11 @@
 </div>
 </template>
 <script>
+import { mapState } from 'vuex'
+
 export default {
   name: 'LoadingGlobal',
-  data() {
-    return {
-      isShow: false
-    }
-  },
-  methods: {
-    show() {
-      this.isShow = true
-    },
-    hide() {
-      this.isShow = false
-    }
-  }
+  computed: mapState(['globalLoading'])
 }
 </script>
 <style lang="scss">

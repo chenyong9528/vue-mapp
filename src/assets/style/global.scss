@@ -43,8 +43,8 @@ textarea {
   -webkit-tap-highlight-color: transparent;
 }
 .container {
-  padding-bottom: 1.7rem;
-  background-color: #f7f7f7;
+  padding-bottom: 3.6rem;
+  background-color: #fff;
 }
 .icon {
   width: 1em;
@@ -58,4 +58,18 @@ textarea {
   background-repeat: no-repeat;
   background-size: 100%;
   background-position: center center;
+}
+.slide-enter,
+.slide-leave-to {
+  transform: translate3d(0, 100%, 0);
+}
+
+.slide-enter-active,
+.slide-leave-active {
+  transition: transform .45s;
+}
+
+.slide-enter-to,
+.slide-leave {
+  transform: translate3d(0, 0, 0);
 }
