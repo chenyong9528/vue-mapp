@@ -3,7 +3,7 @@
     <transition name="slide">
       <div class="player" :style="{ backgroundImage: `url(${ completeImg })` }" v-show="player.isFull" @touchmove.stop.prevent>
         <header class="player-header">
-          <span @click="M_player({ tag: 'playModel', playload: false })">
+          <span @touchstart="M_player({ tag: 'playModel', playload: false })">
             <svg class="icon" aria-hidden="true">
               <use xlink:href="#icon-arrow-down"></use>
             </svg>
@@ -29,20 +29,20 @@
             <span>{{ diyTime(player.endTime) }}</span>
           </div>
           <div class="player-control-btngroup">
-            <div @click="currentAudio">
+            <div @touchstart="currentAudio">
               <svg class="icon" aria-hidden="true">
                 <use xlink:href="#icon-backwardfill"></use>
               </svg>
             </div>
             <div>
-              <svg class="icon" aria-hidden="true" v-if="!player.isPlay" @click="player.instance.play()">
+              <svg class="icon" aria-hidden="true" v-if="!player.isPlay" @touchstart="player.instance.play()">
                 <use xlink:href="#icon-play-fill"></use>
               </svg>
-              <svg class="icon" aria-hidden="true" v-else @click="player.instance.pause()">
+              <svg class="icon" aria-hidden="true" v-else @touchstart="player.instance.pause()">
                 <use xlink:href="#icon-suspended-fill"></use>
               </svg>
             </div>
-            <div @click="nextAudio">
+            <div @touchstart="nextAudio">
               <svg class="icon" aria-hidden="true">
                 <use xlink:href="#icon-play_forward_fill"></use>
               </svg>
@@ -53,10 +53,10 @@
       </div>
     </transition>
     <section class="player-btmbar" :style="{ transform: `translate3d(0, ${ showFooter ? '-1.49rem' : 0 }, 0)` }">
-      <div class="player-btmbar-box" :class="{ disabled: !player.queue.length }" @click="M_player({ tag: 'playModel', playload: true })">
+      <div class="player-btmbar-box" :class="{ disabled: !player.queue.length }" @touchstart="M_player({ tag: 'playModel', playload: true })">
         <span :style="{ backgroundImage: `url(${ completeImg })`, 'animation-play-state': player.isPlay ? 'running' : 'paused' }"></span>
         <p>{{ getBase('name') }}</p>
-        <svg width="128" height="128" viewBox="0 0 128 128" @click.stop="switchPlay">
+        <svg width="128" height="128" viewBox="0 0 128 128" @touchstart.stop="switchPlay">
           <circle cx="64" cy="64" r="55" fill="none" stroke="#3478F6" stroke-width="10" />
           <circle cx="64" cy="64" r="49" fill="none" stroke="#3478F6" stroke-width="10" stroke-dasharray="307.87" :stroke-dashoffset="getOffset" transform="rotate(-90, 64, 64)" />
           <template v-if="!player.isPlay">
@@ -168,7 +168,7 @@ export default {
 
         // 处理滑到到边界的问题
         if (clientX < x) {
-          this.tempTime = 0
+          this.tempTime = 0.001
           return
         }
         if (clientX > (x + width)) {
