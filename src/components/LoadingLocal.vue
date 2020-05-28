@@ -1,7 +1,10 @@
 <template>
   <div class="l-loading" :style="{ visibility: status == 'none' ? 'hidden' : 'visible' }">
-    <i v-if="status == 'loading'" class="icon-loading"></i>
-    <span>{{ text }}</span>
+    <p>
+      <i v-if="status == 'loading'" class="icon-loading"></i>
+      <span>{{ text }}</span>
+    </p>
+    <a href="location.reload(true)" v-if="isShow">点击重试</a>
   </div>
 </template>
 <script>
@@ -15,7 +18,19 @@ export default {
   },
   computed: {
     text() {
-      return this.status == 'loading' ? '拼命载入中...' : '没有了，亲！'
+      switch (this.status) {
+        case 'loading':
+          return '拼命载入中...'
+        case 'no':
+          return '没有了，亲！'
+        case 'none':
+          return ''
+        default:
+          return this.status
+      }
+    },
+    isShow() {
+      return this.status != 'loading' && this.status != 'no' && this.status != 'none'
     }
   }
 }
@@ -23,19 +38,33 @@ export default {
 <style lang="scss">
 .l-loading {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  height: 1.3rem;
-  .icon-loading {
-    display: inline-block;
-    width: .7rem;
-    height: .7rem;
-    margin-right: .12rem;
-    animation: Lloading 1s steps(12, end) infinite;
+  p {
+    height: 1.3rem;
+    display: flex;
+    align-items: center;
+    .icon-loading {
+      display: inline-block;
+      width: .7rem;
+      height: .7rem;
+      margin-right: .12rem;
+      animation: Lloading 1s steps(12, end) infinite;
+    }
+    span {
+      display: inline-block;
+      max-width: 10rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-size: 14px;
+      color: #8b8b8b;
+    }
   }
-  span {
-    font-size: 14px;
-    color: #8b8b8b;
+  a {
+    padding: .15rem .3rem;
+    font-weight: 500;
+    color: var(--T-0);
   }
 }
 

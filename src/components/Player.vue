@@ -1,7 +1,7 @@
 <template>
   <div>
     <transition name="slide">
-      <div class="player" :style="{ '--img': `url(${ completeImg })` }" v-show="player.isFull" @touchmove.stop.prevent>
+      <div class="player" :style="{ backgroundImage: `url(${ completeImg })` }" v-show="player.isFull" @touchmove.stop.prevent>
         <header class="player-header">
           <span @click="M_player({ tag: 'playModel', playload: false })">
             <svg class="icon" aria-hidden="true">
@@ -15,14 +15,14 @@
           <span></span>
         </header>
         <div class="player-record">
-          <img src="../assets/images/player_handle.png" :style="{ transform: `rotate3d(0, 0, 1, ${ player.isPlay ? 0 : '-30deg' })` }">
-          <div :style="{ 'animation-play-state': player.isPlay ? 'running' : 'paused' }">
+          <img src="../assets/images/player_handle.png" :style="{ transform: `rotate(${ player.isPlay ? 0 : '-30deg' })` }">
+          <div :style="{ 'animation-play-state': tempPlay ? 'running' : 'paused' }">
             <span :style="{ backgroundImage: `url(${ completeImg })` }"></span>
           </div>
         </div>
         <section class="player-control">
           <div class="player-control-prog">
-            <span>{{ diyTime(tempTime >= 0 ? tempTime : player.currentTime) }}</span>
+            <span>{{ diyTime(tempTime ? tempTime : player.currentTime) }}</span>
             <div class="player-control-bar" ref="controlBar">
               <div :style="{ width: `${ getProg }%` }"><span @touchstart="handleStart" @touchmove="handleMove" @touchend="handleEnd"></span></div>
             </div>
@@ -49,21 +49,22 @@
             </div>
           </div>
         </section>
+        <div class="player-blur" :style="{ backgroundImage: `url(${ completeImg })` }"></div>
       </div>
     </transition>
-    <section class="player-btmbar" :style="{ transform: `translate3d(0, ${ showFooter ? '-1.5rem' : 0 }, 0)` }">
+    <section class="player-btmbar" :style="{ transform: `translate3d(0, ${ showFooter ? '-1.49rem' : 0 }, 0)` }">
       <div class="player-btmbar-box" :class="{ disabled: !player.queue.length }" @click="M_player({ tag: 'playModel', playload: true })">
         <span :style="{ backgroundImage: `url(${ completeImg })`, 'animation-play-state': player.isPlay ? 'running' : 'paused' }"></span>
         <p>{{ getBase('name') }}</p>
-        <svg width="120" height="120" viewBox="0 0 120 120" @click.stop="switchPlay">
-          <circle cx="60" cy="60" r="54" fill="none" stroke="#3478F6" stroke-width="12" />
-          <circle cx="60" cy="60" r="49" fill="none" stroke="#3478F6" stroke-width="12" stroke-dasharray="307.87" :stroke-dashoffset="getOffset" transform="rotate(-90, 60, 60)" />
+        <svg width="128" height="128" viewBox="0 0 128 128" @click.stop="switchPlay">
+          <circle cx="64" cy="64" r="55" fill="none" stroke="#3478F6" stroke-width="10" />
+          <circle cx="64" cy="64" r="49" fill="none" stroke="#3478F6" stroke-width="10" stroke-dasharray="307.87" :stroke-dashoffset="getOffset" transform="rotate(-90, 64, 64)" />
           <template v-if="!player.isPlay">
-            <polyline points="49 41 49 79 81.9 60 49 41" stroke="#3478F6" stroke-width="12" stroke-linecap="round" fill="#3478F6" stroke-linejoin="round" />
+            <polyline points="53 45 53 83 85.9 64 53 45" stroke="#3478F6" stroke-width="12" stroke-linecap="round" fill="#3478F6" stroke-linejoin="round" />
           </template>
           <template v-else>
-            <polyline points="48 38 48 82" stroke="#3478F6" stroke-width="12" stroke-linecap="butt" stroke-linejoin="miter" />
-            <polyline points="72 38 72 82" stroke="#3478F6" stroke-width="12" stroke-linecap="butt" stroke-linejoin="miter" />
+            <polyline points="52 42 52 86" stroke="#3478F6" stroke-width="12" stroke-linecap="butt" stroke-linejoin="miter" />
+            <polyline points="76 42 76 86" stroke="#3478F6" stroke-width="12" stroke-linecap="butt" stroke-linejoin="miter" />
           </template>
         </svg>
       </div>
@@ -78,9 +79,10 @@ export default {
   name: 'Player',
   data() {
     return {
-      tempTime: -1,/* >=0接管player.currentTime */
+      tempTime: false,/* 非false时接管player.currentTime */
       startX: 0,
-      completeImg: img
+      completeImg: img,
+      tempPlay: false
     }
   },
   computed: {
@@ -89,6 +91,9 @@ export default {
       const { queue, queueActive } = this.player
 
       return queue.length ? queue[queueActive].al.picUrl : false
+    },
+    getIsPlay() {
+      return this.player.isPlay
     },
     getBase() {
       return (tag) => {
@@ -106,8 +111,8 @@ export default {
     },
     getProg() {
       const { currentTime, endTime } = this.player
-
-      return ((this.tempTime >= 0 ? this.tempTime : currentTime) / endTime * 100).toFixed(2)
+      
+      return ((this.tempTime ? this.tempTime : currentTime) / endTime * 100).toFixed(2)
     },
     getOffset() {
       const { currentTime, endTime } = this.player
@@ -184,7 +189,15 @@ export default {
       e.target.style.width = '.27rem'
       e.target.style.height = '.27rem'
       instance.currentTime = this.tempTime
-      this.tempTime = -1
+
+      // 滑动结束会先回到音乐当前进度，再恢复拉到的位置，
+      // 原因是instance回调晚于vue计算属性的执行，提前更新updateCurrentTime来解决
+      this.M_player({
+        tag: 'updateCurrentTime',
+        playload: this.tempTime
+      })
+
+      this.tempTime = false
     }
   },
   watch: {
@@ -194,6 +207,15 @@ export default {
 
       img.onload = () => {
         this.completeImg = n
+      }
+    },
+    getIsPlay(n) {
+      if (n) {
+        setTimeout(() => {
+          this.tempPlay = n
+        }, 380)
+      } else {
+        this.tempPlay = n
       }
     }
   }
@@ -209,35 +231,20 @@ export default {
   bottom: 0;
   z-index: 600;
   overflow: hidden;
-  background-image: var(--img);
   background-repeat: no-repeat;
   background-size: 100% 100%;
-  &:after {
-    content: " ";
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: -1;
-    margin: -1.4rem;
-    filter: blur(.9rem);
-    background-image: var(--img);
-    background-repeat: no-repeat;
-    background-size: 100% 100%;
-    transition: background-image 1.2s;
-  }
+  transition: background-image 1.2s;
   &-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    height: 1.44rem;
-    padding: 0 .4rem;
-    color: #eaeaea;
+    height: 1.7rem;
+    padding: 0 .52rem;
+    color: #e1e1e1;
     span {
       display: inline-block;
-      width: .99rem;
-      height: .99rem;
+      width: 1.02rem;
+      height: 1.02rem;
       font-size: 0;
       -webkit-tap-highlight-color: transparent;
       .icon {
@@ -252,15 +259,15 @@ export default {
       text-align: center;
       line-height: 1.2;
       h5 {
-        font-size: 16px;
+        font-size: 17px;
         font-weight: 500;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
       }
       p {
-        font-size: 13px;
-        color: var(--G-2);
+        font-size: 12px;
+        color: #ccc;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -317,8 +324,8 @@ export default {
         display: inline-block;
         width: 1.4rem;
         text-align: center;
-        font-size: 10px;
-        color: var(--G-1);
+        font-size: 11px;
+        color: rgba(#000, .25);
       }
     }
     &-bar {
@@ -326,12 +333,12 @@ export default {
       height: .07rem;
       font-size: 0;
       border-radius: .1rem;
-      background-color: rgba(#000, .2);
+      background-color: rgba(#000, .25);
       div {
         position: relative;
         height: 100%;
         border-radius: .1rem;
-        background-color: rgba(#000, .3);
+        background-color: rgba(#000, .2);
         span {
           width: .27rem;
           height: .27rem;
@@ -341,6 +348,17 @@ export default {
           top: 50%;
           right: 0;
           transform: translate(50%, -50%);
+          &:after {
+            position: absolute;
+            content: " ";
+            width: .6rem;
+            height: .6rem;
+            top: calc(50% - .3rem);
+            left: calc(50% - .3rem);
+            border-radius: 50%;
+            background-color: transparent;
+            z-index: 1;
+          }
         }
       }
     }
@@ -353,6 +371,7 @@ export default {
         width: .87rem;
         height: .87rem;
         font-size: 0;
+        -webkit-tap-highlight-color: transparent;
         &:nth-child(2) {
           width: 2.1rem;
           height: 2.1rem;
@@ -361,21 +380,36 @@ export default {
         .icon {
           width: 100%;
           height: 100%;
-          color: #d1d1d3;
+          color: #e1e1e1;
           -webkit-tap-highlight-color: transparent;
         }
       }
     }
+  }
+  &-blur {
+    content: " ";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: -1;
+    margin: -1.4rem;
+    filter: blur(.8rem);
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    transition: background-image 1.2s;
   }
   &-btmbar {
     position: fixed;
     left: 0;
     right: 0;
     bottom: 0;
-    z-index: 500;
+    z-index: 450;
     height: 1.35rem;
     background-color: #fff;
     transition: transform .35s;
+    box-shadow: 0 -2px .36rem rgba(#000, .08);
     &-box {
       display: flex;
       align-items: center;
@@ -384,7 +418,8 @@ export default {
       &.disabled {
         pointer-events: none;
         p, svg {
-          opacity: .4;
+          opacity: .5;
+          color: #777;
         }
       }
       >span {
@@ -411,8 +446,8 @@ export default {
         text-overflow: ellipsis;
       }
       svg {
-        width: .9rem;
-        height: .9rem;
+        width: .96rem;
+        height: .96rem;
         -webkit-tap-highlight-color: transparent;
       }
     }
@@ -420,10 +455,10 @@ export default {
 }
 @keyframes linearRotate {
   0% {
-    transform: rotate3d(0, 0, 1, 0);
+    transform: rotate(0);
   }
   100% {
-    transform: rotate3d(0, 0, 1, 360deg);
+    transform: rotate(360deg);
   }
 }
 

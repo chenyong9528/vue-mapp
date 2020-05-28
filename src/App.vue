@@ -1,10 +1,11 @@
 <template>
   <div id="app">
-    <keep-alive>
+    <keep-alive :exclude="exList">
       <router-view></router-view>
-    </keep-alive>
-    <Footer />
+    </keep-alive> 
     <Player />
+    <Footer />
+    <Toast />
     <LoadingGlobal />
   </div>
 </template>
@@ -12,12 +13,19 @@
 import Footer from '@/components/Footer.vue'
 import Player from '@/components/Player.vue'
 import LoadingGlobal from '@/components/LoadingGlobal.vue'
+import Toast from '@/components/Toast.vue'
 
 export default {
   name: 'App',
+  data() {
+    return {
+      exList: ['Top']
+    }
+  },
   components: {
-    Footer,
     Player,
+    Footer,
+    Toast,
     LoadingGlobal
   }
 }

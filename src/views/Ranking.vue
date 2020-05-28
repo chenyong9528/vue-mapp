@@ -100,13 +100,13 @@ export default {
 </script>
 <style lang="scss">
 .rank-dl {
-  padding: .86rem .47rem 0;
+  padding: .57rem .47rem 0;
   background-color: #fff;
   dt {
     height: 1.34rem;
     line-height: 1.34rem;
     font-size: 18px;
-    font-weight: bold;
+    font-weight: 600;
   }
 }
 .rank-follow {
@@ -139,10 +139,10 @@ export default {
         z-index: 1;
         height: .84rem;
         line-height: .84rem;
-        padding: 0 .18rem;
+        padding: .24rem .18rem 0;
         font-size: 12px;
         color: #fff;
-        background: linear-gradient(to bottom, rgba(0, 0, 0, 0), rgba(0, 0, 0, .3));
+        background: linear-gradient(to bottom, rgba(0, 0, 0, 0), rgba(0, 0, 0, .18));
       }
     }
     ol {
@@ -151,7 +151,7 @@ export default {
       li {
         height: .84rem;
         line-height: .84rem;
-        font-size: 16px;
+        font-size: 14px;
         color: #676767;
         white-space: nowrap;
         overflow: hidden;
@@ -168,7 +168,7 @@ export default {
     overflow: hidden;
   }
   &-link h5 {
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 500;
     height: .86rem;
     line-height: .86rem;

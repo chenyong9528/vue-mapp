@@ -1,7 +1,7 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
-import axios from 'axios'
-import api from '../api'
+import axios from '@/http/axios'
+import api from '@/http/api'
 
 Vue.use(Vuex)
 
@@ -16,6 +16,7 @@ export default new Vuex.Store({
     rankList: [],
     showFooter: true,
     globalLoading: false,
+    toastText: '',
     player: {
       queue: [],
       queueActive: -1,
@@ -51,6 +52,9 @@ export default new Vuex.Store({
     setGLoading(state, isShow) {
       state.globalLoading = isShow
     },
+    setToast(state, str) {
+      state.toastText = str
+    },
     M_player({ player }, { tag, playload }) {
       const o = {
         playAudio() {
@@ -70,6 +74,10 @@ export default new Vuex.Store({
         },
         switchAudio(current) {
           player.queueActive = current
+
+          // 切歌后首先初始化当前和总播放时间
+          player.currentTime = 0
+          player.endTime = 1
         },
         playModel(b) {
           player.isFull = b
@@ -93,26 +101,46 @@ export default new Vuex.Store({
       mvRanking.loadingStatus = 'loading'
       
       const { limit, offset } = mvRanking
-      const { data: { data } } = await axios.get(api.apiMvRanking(limit, offset, area == '全部' ? '' : area))
 
-      for (const item of data) {
-        // 对mv数组的每一项添加scr属性用于控制播放
-        Object.assign(item, { src: '' })
+      try {
+        const { data: { data } } = await axios.get(api.apiMvRanking(limit, offset, area == '全部' ? '' : area))
+
+        for (const item of data) {
+          // 对mv数组的每一项添加src属性用于控制播放
+          Object.assign(item, { src: '' })
+        }
+
+        mvRanking.loadingStatus = 'none'
+
+        if (!type) commit('pushMv', { data })
+        else commit('replaceMv', { data })
+      } catch(e) {
+        mvRanking.loadingStatus = String(e)
       }
-
-      mvRanking.loadingStatus = 'none'
-
-      if (!type) commit('pushMv', { data })
-      else commit('replaceMv', { data })
     },
-    async asyncMvDetail({ commit, state: { mvRanking: { list } } }, { id, index }) {
+    async asyncMvDetail({ commit, state: { mvRanking: { list } } }, { id, index, el }) {
       list[index].src = 'loading'
-      const { data: { data } } = await axios.get(api.apiMvUrl(id))
-      commit('playMv', { data, index })
+
+      try {
+        const { data: { data } } = await axios.get(api.apiMvUrl(id))
+        commit('playMv', { data, index, el })
+
+        setTimeout(() => {
+          el.load()
+          el.play()
+        }, 0)
+      } catch(e) {
+        commit('setToast', String(e))
+        list[index].src = ''
+      }
     },
-    async loadRankList({ state }) {
-      const { data: { list } } = await axios.get(api.apiRankList())
-      state.rankList = list
+    async loadRankList({ commit, state }) {
+      try {
+        const { data: { list } } = await axios.get(api.apiRankList())
+        state.rankList = list
+      } catch(e) {
+        commit('setToast', String(e))
+      }
     },
     async readyPlay({ dispatch, commit, state: { player: { queue } } }, item) {
       let index = queue.findIndex(curr => curr.id === item.id)
@@ -124,19 +152,31 @@ export default new Vuex.Store({
       })
 
       commit('setGLoading', true)
-        
+      
       if (index === -1) {
-        const { data: { data } } = await axios.get(api.apiAudioUrl(item.id))
+        try {
+          const { data: { data } } = await axios.get(api.apiAudioUrl(item.id))
 
-        commit({
-          type: 'M_player',
-          tag: 'pushQueue',
-          playload: Object.assign(item, { songs: data })
-        })
+          if (data[0].url == null) {
+            commit('setGLoading', false)
+            commit('setToast', '没有找到音乐')
+            return
+          }
 
-        index = queue.length - 1
+          commit({
+            type: 'M_player',
+            tag: 'pushQueue',
+            playload: Object.assign(item, { songs: data })
+          })
+
+          index = queue.length - 1
+        } catch(e) {
+          commit('setGLoading', false)
+          commit('setToast', String(e))
+          return
+        }
       }
-
+      
       commit({
         type: 'M_player',
         tag: 'switchAudio',
@@ -155,6 +195,8 @@ export default new Vuex.Store({
       } else {
         const ad = new Audio(url)
 
+        ad.load()
+        
         commit({
           type: 'M_player',
           tag: 'initAudioInstance',
@@ -203,7 +245,7 @@ export default new Vuex.Store({
             tag: 'switchAudio',
             playload: queueActive === queue.length - 1 ? 0 : queueActive + 1
           })
-          
+
           dispatch('switchAudio')
         })
       }

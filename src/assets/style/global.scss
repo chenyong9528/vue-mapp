@@ -16,8 +16,8 @@
 html {
   font-size: calc(100vw / 12.42);
 }
-@media (min-width: 560px) {
-  html { font-size: 54px; }
+@media (min-width: 448px) {
+  html { font-size: 36px; }
 }
 body {
   font: 14px/1.5 sans-serif,SimSun,Arial;

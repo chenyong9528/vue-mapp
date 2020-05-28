@@ -12,7 +12,6 @@
 import Velocity from 'velocity-animate'
 
 const screenWidth = window.screen.width
-const tabsLiWidth = screenWidth / 12.42 * 3
 
 export default {
   name: 'Tabs',
@@ -31,13 +30,33 @@ export default {
   },
   data() {
     return {
-      active: this.tabsActive
+      active: this.tabsActive,
+      tabsLiWidth: 0
     }
   },
   computed: {
     offsetBar() {
-      return tabsLiWidth * this.active + tabsLiWidth / 2 - 14
+      return this.tabsLiWidth * this.active + this.tabsLiWidth / 2 - 14
     }
+  },
+  mounted() {
+    const self = this
+    const defaultLiWidth = screenWidth / 12.42 * 3
+    const horizontalLiWidth = 36 * 3
+
+    if (window.orientation == 0) {
+      this.tabsLiWidth = defaultLiWidth
+    } else {
+      this.tabsLiWidth = horizontalLiWidth
+    }
+
+    window.addEventListener('orientationchange', function() {
+      if (this.orientation == 0) {
+        self.tabsLiWidth = defaultLiWidth
+      } else {
+        self.tabsLiWidth = horizontalLiWidth
+      }
+    })
   },
   methods: {
     tabsSwitch(index) {
@@ -48,12 +67,14 @@ export default {
         container: this.$refs.wrapper,
         axis: 'x',
         duration: 350,
-        easing: 'linear',
+        easing: 'ease-out',
         offset: this.offsetBar - screenWidth / 2 + 14
       })
 
       this.$emit('tabClick', index)
-    }
+      
+    },
+    
   }
 }
 
@@ -68,6 +89,7 @@ export default {
   overflow-y: hidden;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  background-color: #fff;
   z-index: 500;
 }
 .tabs-wrapper::-webkit-scrollbar {
@@ -78,7 +100,10 @@ export default {
   width: max-content;
   font-size: 0;
   &:after {
-    @include b-bd(#ebebeb);
+    @include b-bd(#ddd);
+    @media (-webkit-min-device-pixel-ratio: 3),(min-device-pixel-ratio: 3) {
+      transform: scaleY(0.3333333);
+    }
   }
 }
 .tabs-bar {
@@ -87,9 +112,10 @@ export default {
   bottom: 0;
   width: 28px;
   height: 4px;
-  transition-timing-function: linear;
+  transition-timing-function: ease-out;
   transition: transform .35s;
   background-color: var(--T-0);
+  z-index: 4;
 }
 .tabs {
   display: flex;

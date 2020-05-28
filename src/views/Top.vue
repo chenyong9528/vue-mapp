@@ -50,9 +50,9 @@
   </div>
 </template>
 <script>
-import { mapActions } from 'vuex'
-import axios from 'axios'
-import api from '../api'
+import { mapActions, mapMutations } from 'vuex'
+import axios from '@/http/axios'
+import api from '@/http/api'
 
 export default {
   name: 'Top',
@@ -64,12 +64,17 @@ export default {
   },
   async created() {
     this.$loading.show()
-    const { data: { playlist } } = await axios.get(api.apiTopList(this.idx))
-    this.playlist = Object.freeze(playlist)
+    try {
+      const { data: { playlist } } = await axios.get(api.apiTopList(this.idx))
+      this.playlist = Object.freeze(playlist)
+    } catch(e) {
+      this.setToast(String(e))
+    }
     this.$loading.hide()
   },
   methods: {
     ...mapActions(['readyPlay']),
+    ...mapMutations(['setToast']),
     toUnitW(val) {
       if (val > 10000) return `${ Math.floor(val / 10000) }.${ Math.floor((val % 10000) / 1000) }w`
       return val
@@ -117,6 +122,7 @@ export default {
 }
 .top-list-section {
   margin-top: -.6rem;
+  padding-bottom: 1.8rem;
   border-top-left-radius: .6rem;
   border-top-right-radius: .6rem;
   background-color: #f0f0f1;

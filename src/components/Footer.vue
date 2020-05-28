@@ -49,10 +49,13 @@ footer {
   z-index: 500;
   display: flex;
   align-items: center;
-  background-color: rgba(#fff, .98);
+  background-color: rgba(#fff, .99);
   transition: transform .35s;
   &:before {
     @include t-bd(#a4a4a4);
+    @media (-webkit-min-device-pixel-ratio: 3),(min-device-pixel-ratio: 3) {
+      transform: scaleY(0.3333333);
+    }
   }
   a {
     flex: 1;
@@ -83,7 +86,7 @@ footer {
           display: none;
         }
         &:nth-child(2) {
-          display: block;
+          display: unset;
         }
       }
     }

@@ -1,11 +1,11 @@
 <template>
   <div class="container">
-    <form class="form" @submit="handleSubmit">
+    <form class="form" action @submit="handleSubmit">
       <div class="form-bar">
         <svg class="icon" aria-hidden="true">
           <use xlink:href="#icon-search"></use>
         </svg>
-        <input type="search" :placeholder="defaultSearch.length ? defaultSearch[0] : ''" v-model="searchText" @focus="showCancel = true">
+        <input type="search" :placeholder="defaultSearch.length ? defaultSearch[0] : ''" v-model="searchText" @focus="showCancel = true" ref="sText">
       </div>
       <span class="form-cancel" v-show="showCancel" @click="handleCancel">取消</span>
     </form>
@@ -44,15 +44,15 @@
           </div>
         </li>
       </ul>
-      <LoadingLocal status="loading" v-else />
+      <LoadingLocal :status="loadingHot" v-else />
     </div>
     <LoadingLocal status="loading" v-else />
   </div>
 </template>
 <script>
-import { mapActions } from 'vuex'
-import axios from 'axios'
-import api from '@/api'
+import { mapActions, mapMutations } from 'vuex'
+import axios from '@/http/axios'
+import api from '@/http/api'
 import Tabs from '@/components/Tabs.vue'
 import LoadingLocal from '@/components/LoadingLocal.vue'
 
@@ -61,7 +61,7 @@ export default {
   data() {
     return {
       tabs: ['单曲', '专辑', '歌手', '歌单', '用户', 'MV', '歌词', '电台', '视频', '综合'],
-      top: '2.12rem + 19px',
+      top: '2.4rem',
       tabsActive: 0,
       showCancel: false,
       searchText: '',
@@ -70,6 +70,7 @@ export default {
       searchSuggest: [],
       searchResult: [],
       loadingResult: 'none',
+      loadingHot: 'loading',
       mark: false,
       io: null,
       offset: 20
@@ -80,12 +81,20 @@ export default {
     LoadingLocal
   },
   created() {
-    axios.get(api.apiDefaultSearch()).then(({ data: { data: { showKeyword, realkeyword } } }) => {
+    axios.get(api.apiDefaultSearch())
+    .then(({ data: { data: { showKeyword, realkeyword } } }) => {
       this.defaultSearch.push(showKeyword)
       this.defaultSearch.push(realkeyword)
     })
-    axios.get(api.apiHotSearch()).then(({ data: { data } }) => {
+    .catch((e) => {
+      console.log(String(e))
+    })
+    axios.get(api.apiHotSearch())
+    .then(({ data: { data } }) => {
       this.hotSearch =  Object.freeze(data)
+    })
+    .catch((e) => {
+      this.loadingHot = String(e)
     })
 
     this.io = new IntersectionObserver(async (entries) => {
@@ -95,16 +104,20 @@ export default {
 
         this.loadingResult = 'loading'
 
-        const { data: { result: { songCount, songs } } } = await axios.get(api.apiSearch(this.searchText, 10, this.offset))
+        try {
+          const { data: { result: { songCount, songs } } } = await axios.get(api.apiSearch(this.searchText, 10, this.offset))
 
-        if (this.offset >= songCount) {
-          this.loadingResult = 'no'
-          return
+          if (this.offset >= songCount) {
+            this.loadingResult = 'no'
+            return
+          }
+
+          this.offset += 10
+          this.searchResult.push(...songs)
+          this.loadingResult = 'none'
+        } catch(e) {
+          this.loadingResult = String(e)
         }
-
-        this.offset += 10
-        this.searchResult.push(...songs)
-        this.loadingResult = 'none'
       }
     }, {
       threshold: [1],
@@ -113,6 +126,7 @@ export default {
   },
   methods: {
     ...mapActions(['readyPlay']),
+    ...mapMutations(['setToast']),
     handleCancel() {
       this.showCancel = false
       this.searchText = ''
@@ -122,6 +136,7 @@ export default {
     handleSubmit(e) {
       e.preventDefault()
 
+      this.$refs.sText.blur()
       this.assignSearch(this.searchText || this.defaultSearch[1])
 
       if (this.searchText) this.searchSuggest = []
@@ -134,13 +149,23 @@ export default {
     async play(id) {
       this.$loading.show()
 
-      const { data: { songs } } = await axios.get(api.apiSongDetail(id))
+      try {
+        const { data: { songs } } = await axios.get(api.apiSongDetail(id))
+
+        this.readyPlay(songs[0])
+      } catch(e) {
+        this.setToast(String(e))
+      }
 
       this.$loading.hide()
-      this.readyPlay(songs[0])
+      
     },
     async assignSearch(key) {
       this.mark = true
+
+      // 清除tabs之前保留的状态
+      this.tabsActive = 0
+      this.loadingResult = 'none'
 
       if (this.searchText == key) {
         this.searchSuggest = []
@@ -150,14 +175,18 @@ export default {
 
       if (!this.showCancel) this.showCancel = true
 
-      const { data: { result: { songs } } } = await axios.get(api.apiSearch(key))
+      try {
+        const { data: { result: { songs } } } = await axios.get(api.apiSearch(key))
 
-      this.mark = false
-      this.searchResult = songs
+        this.mark = false
+        this.searchResult = songs
 
-      this.offset = 20
-      this.io.disconnect()
-      this.$nextTick(() => this.io.observe(this.$refs.hasBottom))
+        this.offset = 20
+        this.io.disconnect()
+        this.$nextTick(() => this.io.observe(this.$refs.hasBottom))
+      } catch(e) {
+        this.setToast(String(e))
+      }
     }
   },
   watch: {
@@ -168,8 +197,12 @@ export default {
 
       this.searchResult = []
 
-      const { data: { result: { allMatch = null } } } = await axios.get(api.apiSearchSuggest(n.trim()))
-      if (this.searchText) this.searchSuggest = allMatch
+      try {
+        const { data: { result: { allMatch = null } } } = await axios.get(api.apiSearchSuggest(n.trim()))
+        if (this.searchText) this.searchSuggest = allMatch
+      } catch(e) {
+        this.setToast(String(e))
+      }
     }
   }
 }
@@ -179,9 +212,11 @@ export default {
 
 .form {
   display: flex;
-  align-items: center;
-  padding: 1rem .6rem .6rem;
+  align-items: flex-start;
+  height: 2.4rem;
+  padding: .9rem .6rem 0;
   background-color: #fff;
+  box-sizing: border-box;
   position: sticky;
   top: 0;
   z-index: 500;
@@ -201,9 +236,11 @@ export default {
     input {
       flex: 1;
       padding: .26rem .12rem;
-      font-size: 17px;
+      font-size: 16px;
       border: none;
+      outline: none;
       background-color: transparent;
+      // caret-color: #333;
     }
   }
   &-cancel {
@@ -220,9 +257,10 @@ export default {
   padding: .3rem .5rem;
   background-color: #fff;
   > h5 {
-    font-size: 14px;
+    font-size: 15px;
     height: .98rem;
     line-height: .98rem;
+    font-weight: 600;
   }
   &-list {
     display: grid;
@@ -247,14 +285,14 @@ export default {
         display: flex;
         align-items: center;
         span {
-          font-size: 14px;
+          font-size: 15px;
           font-weight: 500;
           overflow: hidden;
           white-space: nowrap;
           text-overflow: ellipsis;
         }
         img {
-          height: .45rem;
+          height: .42rem;
           margin-left: .2rem;
         }
       }
@@ -297,11 +335,15 @@ export default {
         height: 1.35rem;
         line-height: 1.35rem;
         padding-right: .6rem;
+        font-size: 15px;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
         &:after {
-          @include b-bd(#ebebeb);
+          @include b-bd(#e7e7e7);
+          @media (-webkit-min-device-pixel-ratio: 3),(min-device-pixel-ratio: 3) {
+            transform: scaleY(0.3333333);
+          }
         }
       }
     }
@@ -317,12 +359,15 @@ export default {
       padding: .3rem 0;
       -webkit-tap-highlight-color: transparent;
       &:after {
-        @include b-bd(#ebebeb);
+        @include b-bd(#e7e7e7);
+        @media (-webkit-min-device-pixel-ratio: 3),(min-device-pixel-ratio: 3) {
+          transform: scaleY(0.3333333);
+        }
       }
       h5 {
-        font-size: 15px;
+        font-size: 16px;
         font-weight: 500;
-        color: var(--T-1);
+        color: #333;
       }
       p {
         font-size: 12px;

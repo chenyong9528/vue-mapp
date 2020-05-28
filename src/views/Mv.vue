@@ -4,11 +4,11 @@
     <ul class="mv" v-if="mvRanking.list.length">
       <li v-for="(item, index) of mvRanking.list" :key="item.id">
         <div class="mv-bd">
-          <video :src="isComplete(item.src) ? item.src : ''" :controls="isComplete(item.src)" :poster="item.cover" autoplay>
+          <video :src="isComplete(item.src) ? item.src : false" :controls="isComplete(item.src)" :poster="item.cover" playsinline autoplay>
             <p>Sorry, your browser doesn't support embedded videos.</p>
           </video>
           <template v-if="!item.src">
-            <svg class="icon" aria-hidden="true" @click="play(item.id, index)">
+            <svg class="icon" aria-hidden="true" @click="play(item.id, index, $event)">
               <use xlink:href="#icon-play-fill"></use>
             </svg>
             <div class="mv-playCount">
@@ -40,7 +40,8 @@ export default {
   data() {
     return {
       tabsActive: 0,
-      tabs: ['全部', '内地', '港台', '欧美', '日本', '韩国']
+      tabs: ['全部', '内地', '港台', '欧美', '日本', '韩国'],
+      vio: null
     }
   },
   components: {
@@ -50,7 +51,10 @@ export default {
   computed: {
     ...mapState([
       'mvRanking'
-    ])
+    ]),
+    list() {
+      return this.mvRanking.list
+    }
   },
   created() {
     this.loadMv({ area: this.tabs[this.tabsActive], type: 0 })
@@ -70,14 +74,17 @@ export default {
     })
 
     io.observe(this.$refs.hasBottom)
+
+    //初始化vio用于观察video并控制播放状态
+    this.vio = this.createVideoIo()
   },
   methods: {
     ...mapActions([
       'loadMv',
       'asyncMvDetail'
     ]),
-    play(id, index) {
-      this.asyncMvDetail({ id, index })
+    play(id, index, e) {
+      this.asyncMvDetail({ id, index, el: e.currentTarget.previousElementSibling })
     },
     isComplete(src) {
       return Boolean(src && src != 'loading')
@@ -85,6 +92,37 @@ export default {
     tabClick(index) {
       this.tabsActive = index
       this.loadMv({ area: this.tabs[index], type: 1 })
+    },
+    createVideoIo() {
+      return new IntersectionObserver((entries) => {
+        const item = entries[0]
+        const video = item.target.firstElementChild.firstElementChild
+
+        if (item.isIntersecting) {
+          if (!isNaN(video.duration)) video.play()
+        } else {
+          if (!video.paused) video.pause()
+        }
+      }, {
+        threshold: [0.5],
+        rootMargin: '0px 0px 0px 0px',
+      })
+    }
+  },
+  watch: {
+    list(n) {
+      if (n.length) {
+        this.$nextTick(() => {
+          let i = this.mvRanking.offset - 10
+          const lis = document.querySelectorAll('.mv li')
+
+          this.vio.disconnect()
+
+          for (i; i < lis.length; i++) {
+            this.vio.observe(lis[i])
+          }
+        })
+      }
     }
   }
 }
@@ -109,6 +147,7 @@ export default {
     position: relative;
     width: 100%;
     height: 6.31rem;
+    overflow: hidden;
     >.icon {
       position: absolute;
       left: 50%;
@@ -118,10 +157,12 @@ export default {
       width: 1.4rem;
       height: 1.4rem;
       color: var(--T-0);
+      -webkit-tap-highlight-color: transparent;
     }
     video {
       width: 100%;
       height: 100%;
+      transform: scale(1.01);
     }
   }
   &-loading {
@@ -140,7 +181,7 @@ export default {
     right: 0;
     bottom: 0;
     z-index: 1;
-    padding: .04rem .2rem;
+    padding: .04rem .12rem;
     display: flex;
     align-items: center;
     font-size: 10px;
@@ -158,12 +199,12 @@ export default {
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      font-size: 24px;
+      font-size: 22px;
       font-weight: 500;
     }
     p {
-      margin-top: .3rem;
-      font-size: 18px;
+      margin-top: .15rem;
+      font-size: 16px;
       color: var(--G-2);
     }
   }
