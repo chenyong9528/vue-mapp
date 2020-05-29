@@ -1,7 +1,7 @@
 # vue-mapp
 本项目基于[vue](https://github.com/vuejs/vue)全家桶，仿ios网易云音乐app，有问题欢迎Issues，一起讨论学习QAQ，后端API使用的[NeteaseCloudMusicApi](https://github.com/Binaryify/NeteaseCloudMusicApi)。
 
-## 使用指南(确保安装了[nodeJs](https://nodejs.org/en/))
+## 使用指南(确保安装了[nodeJs](https://nodejs.org/en/)和[git](https://npm.taobao.org/mirrors/git-for-windows/))
 ```
 // 首先把后端API跑起来
 $ git clone https://github.com/Binaryify/NeteaseCloudMusicApi.git
@@ -20,7 +20,9 @@ $ npm install
 $ npm run serve
 
 // 如果需要手机访问，找到src/http/axios.js
-// 把http://localhost:3000 修改为http://[自己电脑的ip]:3000
+// 把http://localhost:3000 修改为http://[自己电脑的ip]:3000，然后通过http://[自己电脑的ip]:8080/访问
+
+// 如果不使用git也可以直接下载
 ```
 
 ## 技术栈
