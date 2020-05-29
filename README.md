@@ -4,7 +4,8 @@
 ## 使用指南(确保安装了[nodeJs](https://nodejs.org/en/))
 ```
 // 首先把后端API跑起来
-$ git clone git@github.com:Binaryify/NeteaseCloudMusicApi.git
+$ git clone https://github.com/Binaryify/NeteaseCloudMusicApi.git
+$ cd NeteaseCloudMusicApi
 $ npm install
 
 $ node app.js
@@ -12,7 +13,8 @@ $ node app.js
 
 ```
 // 然后克隆安装并运行本项目就可以在浏览器中访问了http://localhost:8080/
-$ git clone git@github.com:chenyong9528/vue-mapp.git
+$ git clone https://github.com/chenyong9528/vue-mapp.git
+$ cd vue-mapp
 $ npm install
 
 $ npm run serve
