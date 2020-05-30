@@ -69,8 +69,8 @@ export default new Vuex.Store({
         initEndTime(endTime) {
           player.endTime = endTime
         },
-        pushQueue({ id, name, ar, al, songs }) {
-          player.queue.push({ id, name, ar, al, songs })
+        pushQueue({ id, name, ar, al, songs, lyric }) {
+          player.queue.push({ id, name, ar, al, songs, lyric })
         },
         switchAudio(current) {
           player.queueActive = current
@@ -156,6 +156,7 @@ export default new Vuex.Store({
       if (index === -1) {
         try {
           const { data: { data } } = await axios.get(api.apiAudioUrl(item.id))
+          const { data: { lrc: { lyric } } } = await axios.get(api.apiLyric(item.id))
 
           if (data[0].url == null) {
             commit('setGLoading', false)
@@ -166,7 +167,7 @@ export default new Vuex.Store({
           commit({
             type: 'M_player',
             tag: 'pushQueue',
-            playload: Object.assign(item, { songs: data })
+            playload: Object.assign(item, { songs: data, lyric })
           })
 
           index = queue.length - 1

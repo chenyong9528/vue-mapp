@@ -4,6 +4,7 @@ export default {
   apiRankList: () => `/toplist/detail`,
   apiTopList: (idx) => `/top/list?idx=${idx}`,
   apiAudioUrl: (id) => `/song/url?id=${id}`,
+  apiLyric: (id) => `/lyric?id=${id}`,
   apiSongDetail: (id) => `/song/detail?ids=${id}`,
   apiDefaultSearch: () => `/search/default`,
   apiHotSearch: () => `/search/hot/detail`,

@@ -14,11 +14,13 @@
           </div>
           <span></span>
         </header>
-        <div class="player-record">
+        <div v-if="!showLyric" class="player-record">
           <img src="../assets/images/player_handle.png" :style="{ transform: `rotate(${ player.isPlay ? 0 : '-30deg' })` }">
           <div :style="{ 'animation-play-state': tempPlay ? 'running' : 'paused' }">
             <span :style="{ backgroundImage: `url(${ completeImg })` }"></span>
           </div>
+        </div>
+        <div v-else>
         </div>
         <section class="player-control">
           <div class="player-control-prog">
@@ -82,7 +84,8 @@ export default {
       tempTime: false,/* 非false时接管player.currentTime */
       startX: 0,
       completeImg: img,
-      tempPlay: false
+      tempPlay: false,
+      showLyric: false
     }
   },
   computed: {
