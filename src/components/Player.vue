@@ -1,7 +1,7 @@
 <template>
   <div>
-    <transition name="slide">
-      <div class="player" :style="{ backgroundImage: `url(${ completeImg })` }" v-show="player.isFull" @touchmove.stop.prevent>
+    <transition name="slide"><!-- @touchmove.stop.prevent -->
+      <div class="player" :style="{ backgroundImage: `url(${ completeImg })` }" v-show="player.isFull">
         <header class="player-header">
           <span @touchstart="M_player({ tag: 'playModel', playload: false })">
             <svg class="icon" aria-hidden="true">
@@ -14,13 +14,16 @@
           </div>
           <span></span>
         </header>
-        <div v-if="!showLyric" class="player-record">
+        <div v-if="!showLyric" @click="showLyric = true" class="player-record">
           <img src="../assets/images/player_handle.png" :style="{ transform: `rotate(${ player.isPlay ? 0 : '-30deg' })` }">
           <div :style="{ 'animation-play-state': tempPlay ? 'running' : 'paused' }">
             <span :style="{ backgroundImage: `url(${ completeImg })` }"></span>
           </div>
         </div>
-        <div v-else>
+        <div v-else @click="showLyric = false" class="player-lyric">
+          <ul v-if="getLyric">
+            <li v-for="({ content, time }, index) of getLyric" :key="index" :class="{ current: player.currentTime >= time }">{{ content }}</li>
+          </ul>
         </div>
         <section class="player-control">
           <div class="player-control-prog">
@@ -85,7 +88,7 @@ export default {
       startX: 0,
       completeImg: img,
       tempPlay: false,
-      showLyric: false
+      showLyric: true
     }
   },
   computed: {
@@ -93,7 +96,17 @@ export default {
     getSrc() {
       const { queue, queueActive } = this.player
 
-      return queue.length ? queue[queueActive].al.picUrl : false
+      return queue[queueActive]?.al.picUrl
+    },
+    getLyric() {
+      const { queue, queueActive } = this.player
+      
+      return queue[queueActive]?.lyric.split('\n').map(curr => {
+        return {
+          content: curr.slice(11),
+          time: curr.slice(1, 10).split(':').reduce((c, n) => c * 60 + Number(n))
+        }
+      })
     },
     getIsPlay() {
       return this.player.isPlay
@@ -104,9 +117,9 @@ export default {
 
         switch (tag) {
           case 'name':
-            return queue.length ? queue[queueActive].name : '球球音乐，让生活充满音乐'
+            return queue[queueActive]?.name || '球球音乐，让生活充满音乐'
           case 'ar':
-            return queue.length ? queue[queueActive].ar.map(curr => curr.name).join(',') : ''
+            return queue[queueActive]?.ar.map(curr => curr.name).join(',') || ''
           default:
             return
         }
@@ -310,6 +323,24 @@ export default {
         background-position: center center;
         background-size: cover;
         transition: background-image 1.2s;
+      }
+    }
+  }
+  &-lyric {
+    height: 74vh;
+    overflow-y: auto;
+    >ul {
+      li {
+        padding: 0 12px;
+        height: 30px;
+        line-height: 30px;
+        text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        &.current {
+          color: blue;
+        }
       }
     }
   }
