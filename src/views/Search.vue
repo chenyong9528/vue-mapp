@@ -224,23 +224,23 @@ export default {
     flex: 1;
     display: flex;
     align-items: center;
-    padding: 0 .2rem;
-    border-radius: .3rem;
+    padding: 0 6px;
+    border-radius: .1rem;
     overflow: hidden;
     background-color: #eeeeef;
     .icon {
-      width: .88rem;
-      height: .88rem;
+      width: 27px;
+      height: 27px;
       color: #8e8e92;
     }
     input {
       flex: 1;
-      padding: .26rem .12rem;
+      padding: .26rem 4px;
       font-size: 16px;
       border: none;
       outline: none;
       background-color: transparent;
-      // caret-color: #333;
+      caret-color: var(--T-0);
     }
   }
   &-cancel {
