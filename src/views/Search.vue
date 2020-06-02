@@ -214,7 +214,7 @@ export default {
   display: flex;
   align-items: flex-start;
   height: 2.4rem;
-  padding: .9rem .6rem 0;
+  padding: .9rem 20px 0;
   background-color: #fff;
   box-sizing: border-box;
   position: sticky;
