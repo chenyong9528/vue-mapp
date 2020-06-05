@@ -1,9 +1,9 @@
 <template>
   <div>
-    <transition name="slide"><!-- @touchmove.stop.prevent -->
-      <div class="player" :style="{ backgroundImage: `url(${ completeImg })` }" v-show="player.isFull">
+    <transition name="slide">
+      <div class="player" :style="{ backgroundImage: `url(${ completeImg })` }" v-show="player.isFull" @touchmove.stop.prevent>
         <header class="player-header">
-          <span @touchstart="M_player({ tag: 'playModel', playload: false })">
+          <span @click="M_player({ tag: 'playModel', playload: false })">
             <svg class="icon" aria-hidden="true">
               <use xlink:href="#icon-arrow-down"></use>
             </svg>
@@ -14,15 +14,15 @@
           </div>
           <span></span>
         </header>
-        <div v-if="!showLyric" @click="showLyric = true" class="player-record">
+        <div class="player-record">
           <img src="../assets/images/player_handle.png" :style="{ transform: `rotate(${ player.isPlay ? 0 : '-30deg' })` }">
           <div :style="{ 'animation-play-state': tempPlay ? 'running' : 'paused' }">
             <span :style="{ backgroundImage: `url(${ completeImg })` }"></span>
           </div>
         </div>
-        <div v-else @click="showLyric = false" class="player-lyric">
-          <ul v-if="getLyric">
-            <li v-for="({ content, time }, index) of getLyric" :key="index" :class="{ current: player.currentTime >= time }">{{ content }}</li>
+        <div class="player-lyric">
+          <ul v-if="getLyric" :style="{ transform: `translateY(${ -(getCurrentLyric * 24) }px)` }">
+            <li v-for="({ content }, index) of getLyric" :key="index" :class="{ current: index === getCurrentLyric }"><span>{{ content }}</span></li>
           </ul>
         </div>
         <section class="player-control">
@@ -57,11 +57,11 @@
         <div class="player-blur" :style="{ backgroundImage: `url(${ completeImg })` }"></div>
       </div>
     </transition>
-    <section class="player-btmbar" :style="{ transform: `translate3d(0, ${ showFooter ? '-1.49rem' : 0 }, 0)` }">
-      <div class="player-btmbar-box" :class="{ disabled: !player.queue.length }" @touchstart="M_player({ tag: 'playModel', playload: true })">
+    <section class="player-btmbar" :style="{ transform: `translate3d(0, ${ offset }rem, 0)` }">
+      <div class="player-btmbar-box" :class="{ disabled: !player.queue.length }" @click="M_player({ tag: 'playModel', playload: true })">
         <span :style="{ backgroundImage: `url(${ completeImg })`, 'animation-play-state': player.isPlay ? 'running' : 'paused' }"></span>
         <p>{{ getBase('name') }}</p>
-        <svg width="128" height="128" viewBox="0 0 128 128" @touchstart.stop="switchPlay">
+        <svg width="128" height="128" viewBox="0 0 128 128" @click.stop="switchPlay">
           <circle cx="64" cy="64" r="55" fill="none" stroke="#3478F6" stroke-width="10" />
           <circle cx="64" cy="64" r="49" fill="none" stroke="#3478F6" stroke-width="10" stroke-dasharray="307.87" :stroke-dashoffset="getOffset" transform="rotate(-90, 64, 64)" />
           <template v-if="!player.isPlay">
@@ -88,11 +88,20 @@ export default {
       startX: 0,
       completeImg: img,
       tempPlay: false,
-      showLyric: true
     }
   },
   computed: {
-    ...mapState(['showFooter', 'player']),
+    ...mapState(['footerOffset', 'player']),
+    offset() {
+      switch (this.footerOffset) {
+        case 0:
+          return -1.49
+        case 1:
+          return 0
+        default:
+          return 1.5
+      }
+    },
     getSrc() {
       const { queue, queueActive } = this.player
 
@@ -100,13 +109,33 @@ export default {
     },
     getLyric() {
       const { queue, queueActive } = this.player
-      
-      return queue[queueActive]?.lyric.split('\n').map(curr => {
-        return {
-          content: curr.slice(11),
-          time: curr.slice(1, 10).split(':').reduce((c, n) => c * 60 + Number(n))
+      const result = []
+      const lyric = queue[queueActive]?.lyric.split('\n')
+
+      if (!lyric) return
+
+      for (const item of lyric) {
+        // 去掉歌词数组中没有时间或者没有歌词的项
+        if (!isNaN(Number(item.slice(1, 2))) && item.slice(11, 13).trim().length > 0) {
+          result.push({
+            content: item.slice(11),
+            time: item.slice(1, 10).split(':').reduce((c, n) => c * 60 + Number(n)),
+          })
         }
-      })
+      }
+      return result
+    },
+    getCurrentLyric() {
+      // 随着播放时间的增加，更新当前播放时间在歌词数组中的位置
+      let index = this.getLyric.findIndex(curr => this.player.currentTime < curr.time)
+
+      if (index !== -1) {
+        index -= 1
+      } else {
+        // 播放末尾时，index总是最后一句歌词
+        index = this.getLyric.length - 1
+      }
+      return index
     },
     getIsPlay() {
       return this.player.isPlay
@@ -233,7 +262,7 @@ export default {
       } else {
         this.tempPlay = n
       }
-    }
+    },
   }
 }
 
@@ -292,11 +321,11 @@ export default {
   }
   &-record {
     position: relative;
-    padding-top: 2.8rem;
+    padding-top: 2.6rem;
     >img {
       position: absolute;
       z-index: 2;
-      top: .2rem;
+      top: 0;
       left: 5.75rem;
       width: 3.18rem;
       transition: transform .5s;
@@ -327,19 +356,32 @@ export default {
     }
   }
   &-lyric {
-    height: 74vh;
-    overflow-y: auto;
+    height: 72px;
+    padding-top: 24px;
+    box-sizing: border-box;
+    overflow: hidden;
     >ul {
+      transition: transform .35s;
       li {
-        padding: 0 12px;
-        height: 30px;
-        line-height: 30px;
-        text-align: center;
-        white-space: nowrap;
+        height: 24px;
+        line-height: 24px;
         overflow: hidden;
-        text-overflow: ellipsis;
+        span {
+          display: block;
+          padding: 0 24px;
+          text-align: center;
+          font-size: 12px;
+          color: #ccc;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          transition: transform .35s;
+        }
         &.current {
-          color: blue;
+          span {
+            color: #e1e1e1;
+            transform: scale(1.2);
+          }
         }
       }
     }
@@ -348,7 +390,7 @@ export default {
     position: absolute;
     left: 0;
     right: 0;
-    bottom: .75rem;
+    bottom: .48rem;
     z-index: 2;
     &-prog {
       display: flex;
@@ -400,7 +442,7 @@ export default {
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-top: .39rem;
+      margin-top: .3rem;
       div {
         width: .87rem;
         height: .87rem;

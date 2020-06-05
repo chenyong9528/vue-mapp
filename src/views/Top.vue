@@ -2,6 +2,9 @@
   <div v-if="playlist">
     <div class="top-banner">
       <img :src="playlist.coverImgUrl">
+      <svg class="icon" aria-hidden="true" @click="replaceJump">
+        <use xlink:href="#icon-arrow-lift"></use>
+      </svg>
       <ul class="top-banner-ul">
         <li>
           <svg class="icon" aria-hidden="true">
@@ -88,7 +91,10 @@ export default {
 
       if (ny === y) return `${ m }月${ d }日`
       return `${ y }年${ m }月${ d }日`
-    }
+    },
+    replaceJump() {
+      this.$router.replace('/ranking')
+    },
   }
 }
 
@@ -96,10 +102,19 @@ export default {
 <style lang="scss">
 .top-banner {
   position: relative;
-  z-index: -1;
   font-size: 0;
   >img {
     width: 100%;
+  }
+  >.icon {
+    position: absolute;
+    left: .36rem;
+    top: .45rem;
+    z-index: 2;
+    width: .9rem;
+    height: .9rem;
+    color: #fff;
+    -webkit-tap-highlight-color: transparent;
   }
   &-ul {
     position: absolute;

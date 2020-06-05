@@ -14,7 +14,7 @@ export default new Vuex.Store({
       loadingStatus: 'none'
     },
     rankList: [],
-    showFooter: true,
+    footerOffset: 0, // 0 1 2 footer的三种显示状态
     globalLoading: false,
     toastText: '',
     player: {
@@ -46,8 +46,8 @@ export default new Vuex.Store({
     playMv({ mvRanking: { list } }, { data, index }) {
       list[index].src = data.url
     },
-    setFooter(state, isShow) {
-      state.showFooter = isShow
+    setFooter(state, tag) {
+      state.footerOffset = tag
     },
     setGLoading(state, isShow) {
       state.globalLoading = isShow
@@ -55,7 +55,8 @@ export default new Vuex.Store({
     setToast(state, str) {
       state.toastText = str
     },
-    M_player({ player }, { tag, playload }) {
+    M_player(state, { tag, playload }) {
+      const { player } = state
       const o = {
         playAudio() {
           player.isPlay = true
@@ -80,6 +81,14 @@ export default new Vuex.Store({
           player.endTime = 1
         },
         playModel(b) {
+          if (b) {
+            state.temp = state.footerOffset
+            state.footerOffset = 2
+          } else {
+            setTimeout(() => {
+              state.footerOffset = state.temp
+            }, 450)
+          }
           player.isFull = b
         },
         initAudioInstance(instance) {

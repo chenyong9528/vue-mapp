@@ -1,6 +1,6 @@
 <template>
-  <footer :style="{ transform: `translate3d(0, ${ showFooter ? 0 : '1.5rem' }, 0)` }">
-    <router-link to="/" exact>
+  <footer :style="{ transform: `translate3d(0, ${ offset }rem, 0)` }">
+    <router-link to="/" exact replace>
       <svg class="icon" aria-hidden="true">
         <use xlink:href="#icon-play"></use>
       </svg>
@@ -9,7 +9,7 @@
       </svg>
       <p>Mv</p>
     </router-link>
-    <router-link to="/ranking" exact>
+    <router-link to="/ranking" exact replace>
       <svg class="icon" aria-hidden="true">
         <use xlink:href="#icon-integral"></use>
       </svg>
@@ -18,7 +18,7 @@
       </svg>
       <p>Ranking</p>
     </router-link>
-    <router-link to="/search" exact>
+    <router-link to="/search" exact replace>
       <svg class="icon" aria-hidden="true">
         <use xlink:href="#icon-search"></use>
       </svg>
@@ -34,7 +34,19 @@ import { mapState } from 'vuex'
 
 export default {
   name: 'Footer',
-  computed: mapState(['showFooter'])
+  computed: {
+    ...mapState(['footerOffset']),
+    offset() {
+      switch (this.footerOffset) {
+        case 0:
+          return 0
+        case 1:
+          return 1.5
+        default:
+          return 3
+      }
+    },
+  }
 }
 
 </script>

@@ -5,7 +5,7 @@
       <dd>
         <ul class="rank-follow">
           <li v-for="item of g_rankList(1)" :key="item.id">
-            <router-link :to="getUrl(item.name)" class="rank-follow-link">
+            <router-link :to="getUrl(item.name)" class="rank-follow-link" replace>
               <div class="rank-header">
                 <img :src="item.coverImgUrl">
                 <span>{{ item.updateFrequency }}</span>
@@ -23,7 +23,7 @@
       <dd>
         <ul class="rank-other">
           <li v-for="item of g_rankList(0)" :key="item.id">
-            <router-link :to="getUrl(item.name)" class="rank-other-link">
+            <router-link :to="getUrl(item.name)" class="rank-other-link" replace>
               <div class="rank-header">
                 <img :src="item.coverImgUrl">
                 <span>{{ item.updateFrequency }}</span>
