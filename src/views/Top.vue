@@ -2,7 +2,7 @@
   <div v-if="playlist">
     <div class="top-banner">
       <img :src="playlist.coverImgUrl">
-      <svg class="icon" aria-hidden="true" @click="replaceJump">
+      <svg class="icon" aria-hidden="true" ref="back" @click="replaceJump">
         <use xlink:href="#icon-arrow-lift"></use>
       </svg>
       <ul class="top-banner-ul">
@@ -29,10 +29,15 @@
     <section class="top-list-section">
       <header class="top-list-header">
         <div>
-          <svg class="icon" aria-hidden="true">
-            <use xlink:href="#icon-play"></use>
-          </svg>
-          <em>播放全部</em>
+          <p :style="{ transform: `translateY(${ tag ? '-100%' : 0 })` }">
+            <svg class="icon" aria-hidden="true">
+              <use xlink:href="#icon-play"></use>
+            </svg>
+            <svg class="icon" aria-hidden="true" @click="replaceJump">
+              <use xlink:href="#icon-arrow-lift"></use>
+            </svg>
+          </p>
+          <em>全部</em>
           <span>(共{{ playlist.tracks.length }}首)</span>
         </div>
         <span>收藏({{ toUnitW(playlist.subscribedCount) }})</span>
@@ -62,7 +67,8 @@ export default {
   props: ['idx'],
   data() {
     return {
-      playlist: null
+      playlist: null,
+      tag: false,
     }
   },
   async created() {
@@ -74,6 +80,17 @@ export default {
       this.setToast(String(e))
     }
     this.$loading.hide()
+
+    const io = new IntersectionObserver((entries) => {
+
+      this.tag = !entries[0].isIntersecting
+
+    }, {
+      threshold: [0],
+      rootMargin: '-8px 0px 0px 0px',
+    })
+
+    this.$nextTick(() => io.observe(this.$refs.back))
   },
   methods: {
     ...mapActions(['readyPlay']),
@@ -102,17 +119,25 @@ export default {
 <style lang="scss">
 .top-banner {
   position: relative;
+  height: 100vw;
   font-size: 0;
   >img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: -1;
     width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
   >.icon {
-    position: absolute;
+    position: sticky;
     left: .36rem;
     top: .45rem;
     z-index: 2;
     width: .9rem;
     height: .9rem;
+    margin-bottom: .45rem;
     color: #fff;
     -webkit-tap-highlight-color: transparent;
   }
@@ -136,29 +161,33 @@ export default {
   }
 }
 .top-list-section {
-  margin-top: -.6rem;
   padding-bottom: 1.8rem;
-  border-top-left-radius: .6rem;
-  border-top-right-radius: .6rem;
   background-color: #f0f0f1;
 }
 .top-list-header {
   position: sticky;
   top: 0;
-  border-top-left-radius: .6rem;
-  border-top-right-radius: .6rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: .18rem .2rem;
+  padding: .18rem .2rem .18rem .4rem;
   background-color: #f0f0f1;
   div {
     display: flex;
     align-items: center;
-    .icon {
+    overflow: hidden;
+    p {
       width: .86rem;
       height: .86rem;
       margin-right: .1rem;
+      display: flex;
+      flex-direction: column;
+      transition: transform .5s;
+    }
+    .icon {
+      width: 100%;
+      height: 100%;
+      flex-shrink: 0;
     }
     em {
       font-size: 16px;

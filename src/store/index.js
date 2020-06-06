@@ -87,7 +87,7 @@ export default new Vuex.Store({
           } else {
             setTimeout(() => {
               state.footerOffset = state.temp
-            }, 450)
+            }, 400)
           }
           player.isFull = b
         },

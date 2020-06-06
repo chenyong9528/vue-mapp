@@ -117,12 +117,22 @@ export default {
       for (const item of lyric) {
         // 去掉歌词数组中没有时间或者没有歌词的项
         if (!isNaN(Number(item.slice(1, 2))) && item.slice(11, 13).trim().length > 0) {
-          result.push({
-            content: item.slice(11),
-            time: item.slice(1, 10).split(':').reduce((c, n) => c * 60 + Number(n)),
-          })
+          const content = item.match(/([^\]]+$)/)[1] // 歌词内容
+          const timeList = item.match(/(?<=\[).+?(?=\])/g) // 重复歌词的时间数组
+
+          for (const item1 of timeList) {
+            result.push({
+              content,
+              // 02:12.325 => 132.325
+              time: item1.split(':').reduce((c, n) => c * 60 + Number(n)),
+            })
+          }
         }
       }
+
+      // 按时间升序排列歌词
+      result.sort((a, b) => a.time - b.time)
+
       return result
     },
     getCurrentLyric() {
@@ -536,6 +546,20 @@ export default {
   100% {
     transform: rotate(360deg);
   }
+}
+.slide-enter,
+.slide-leave-to {
+  transform: translate3d(0, 100%, 0);
+}
+
+.slide-enter-active,
+.slide-leave-active {
+  transition: transform .35s;
+}
+
+.slide-enter-to,
+.slide-leave {
+  transform: translate3d(0, 0, 0);
 }
 
 </style>

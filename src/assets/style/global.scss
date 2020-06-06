@@ -59,17 +59,3 @@ textarea {
   background-size: 100%;
   background-position: center center;
 }
-.slide-enter,
-.slide-leave-to {
-  transform: translate3d(0, 100%, 0);
-}
-
-.slide-enter-active,
-.slide-leave-active {
-  transition: transform .45s;
-}
-
-.slide-enter-to,
-.slide-leave {
-  transform: translate3d(0, 0, 0);
-}
