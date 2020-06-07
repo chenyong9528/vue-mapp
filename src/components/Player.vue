@@ -118,7 +118,7 @@ export default {
         // 去掉歌词数组中没有时间或者没有歌词的项
         if (!isNaN(Number(item.slice(1, 2))) && item.slice(11, 13).trim().length > 0) {
           const content = item.match(/([^\]]+$)/)[1] // 歌词内容
-          const timeList = item.match(/(?<=\[).+?(?=\])/g) // 重复歌词的时间数组
+          const timeList = item.match(/[^[\]]+(?=])/g) // 重复歌词的时间数组
 
           for (const item1 of timeList) {
             result.push({

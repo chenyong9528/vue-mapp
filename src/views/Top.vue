@@ -188,6 +188,7 @@ export default {
       width: 100%;
       height: 100%;
       flex-shrink: 0;
+      -webkit-tap-highlight-color: transparent;
     }
     em {
       font-size: 16px;
