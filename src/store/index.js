@@ -15,6 +15,7 @@ export default new Vuex.Store({
     },
     rankList: [],
     footerOffset: 0, // 0 1 2 footer的三种显示状态
+    beforeFooterState: 0,
     globalLoading: false,
     toastText: '',
     player: {
@@ -57,6 +58,7 @@ export default new Vuex.Store({
     },
     M_player(state, { tag, playload }) {
       const { player } = state
+
       const o = {
         playAudio() {
           player.isPlay = true
@@ -80,16 +82,17 @@ export default new Vuex.Store({
           player.currentTime = 0
           player.endTime = 1
         },
-        playModel(b) {
-          if (b) {
-            state.temp = state.footerOffset
+        playModel() {
+          // 打开播放器时，处理footer动画
+          if (!player.isFull) {
+            state.beforeFooterState = state.footerOffset
             state.footerOffset = 2
           } else {
             setTimeout(() => {
-              state.footerOffset = state.temp
+              state.footerOffset = state.beforeFooterState
             }, 400)
           }
-          player.isFull = b
+          player.isFull = !player.isFull
         },
         initAudioInstance(instance) {
           player.instance = instance
@@ -156,8 +159,7 @@ export default new Vuex.Store({
 
       commit({
         type: 'M_player',
-        tag: 'playModel',
-        playload: true
+        tag: 'playModel'
       })
 
       commit('setGLoading', true)

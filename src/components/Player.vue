@@ -3,7 +3,7 @@
     <transition name="slide">
       <div class="player" :style="{ backgroundImage: `url(${ completeImg })` }" v-show="player.isFull" @touchmove.stop.prevent>
         <header class="player-header">
-          <span @click="M_player({ tag: 'playModel', playload: false })">
+          <span @click="M_player({ tag: 'playModel' })">
             <svg class="icon" aria-hidden="true">
               <use xlink:href="#icon-arrow-down"></use>
             </svg>
@@ -58,7 +58,7 @@
       </div>
     </transition>
     <section class="player-btmbar" :style="{ transform: `translate3d(0, ${ offset }rem, 0)` }">
-      <div class="player-btmbar-box" :class="{ disabled: !player.queue.length }" @click="M_player({ tag: 'playModel', playload: true })">
+      <div class="player-btmbar-box" :class="{ disabled: !player.queue.length }" @click="M_player({ tag: 'playModel' })">
         <span :style="{ backgroundImage: `url(${ completeImg })`, 'animation-play-state': player.isPlay ? 'running' : 'paused' }"></span>
         <p>{{ getBase('name') }}</p>
         <svg width="128" height="128" viewBox="0 0 128 128" @click.stop="switchPlay">
