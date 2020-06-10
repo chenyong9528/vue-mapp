@@ -21,9 +21,11 @@
           </div>
         </div>
         <div class="player-lyric">
-          <ul v-if="getLyric" :style="{ transform: `translateY(${ -(getCurrentLyric * 24) }px)` }">
-            <li v-for="({ content }, index) of getLyric" :key="index" :class="{ current: index === getCurrentLyric }"><span>{{ content }}</span></li>
-          </ul>
+          <div>
+            <ul v-if="getLyric" :style="{ transform: `translateY(${ -(getCurrentLyric * 24) }px)` }">
+              <li v-for="({ content }, index) of getLyric" :key="index" :class="{ current: index === getCurrentLyric }"><span>{{ content }}</span></li>
+            </ul>
+          </div>
         </div>
         <section class="player-control">
           <div class="player-control-prog">
@@ -34,20 +36,20 @@
             <span>{{ diyTime(player.endTime) }}</span>
           </div>
           <div class="player-control-btngroup">
-            <div @touchstart="currentAudio">
+            <div @click="currentAudio">
               <svg class="icon" aria-hidden="true">
                 <use xlink:href="#icon-backwardfill"></use>
               </svg>
             </div>
             <div>
-              <svg class="icon" aria-hidden="true" v-if="!player.isPlay" @touchstart="player.instance.play()">
+              <svg class="icon" aria-hidden="true" v-if="!player.isPlay" @click="player.instance.play()">
                 <use xlink:href="#icon-play-fill"></use>
               </svg>
-              <svg class="icon" aria-hidden="true" v-else @touchstart="player.instance.pause()">
+              <svg class="icon" aria-hidden="true" v-else @click="player.instance.pause()">
                 <use xlink:href="#icon-suspended-fill"></use>
               </svg>
             </div>
-            <div @touchstart="nextAudio">
+            <div @click="nextAudio">
               <svg class="icon" aria-hidden="true">
                 <use xlink:href="#icon-play_forward_fill"></use>
               </svg>
@@ -366,11 +368,15 @@ export default {
     }
   }
   &-lyric {
-    height: 72px;
-    padding-top: 24px;
-    box-sizing: border-box;
-    overflow: hidden;
-    >ul {
+    height: 20vh;
+    transform: translateY(0);
+    >div {
+      height: 72px;
+      padding-top: 24px;
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+    ul {
       transition: transform .35s;
       li {
         height: 24px;

@@ -166,8 +166,13 @@ export default new Vuex.Store({
       
       if (index === -1) {
         try {
-          const { data: { data } } = await axios.get(api.apiAudioUrl(item.id))
-          const { data: { lrc: { lyric } } } = await axios.get(api.apiLyric(item.id))
+          const p1 = axios.get(api.apiAudioUrl(item.id))
+          const p2 = axios.get(api.apiLyric(item.id))
+
+          const [
+            { data: { data } },
+            { data: { lrc: { lyric } } },
+          ] = await Promise.all([p1, p2])
 
           if (data[0].url == null) {
             commit('setGLoading', false)
@@ -200,6 +205,7 @@ export default new Vuex.Store({
     switchAudio({ dispatch, commit, state: { player, player: { queue, queueActive, instance } } }) {
       const { songs } = queue[queueActive]
       const url = songs[0].url
+      let ntime = (new Date()).getTime()
 
       if (instance) {
         instance.src = url
@@ -231,6 +237,12 @@ export default new Vuex.Store({
           })
         })
         ad.addEventListener('timeupdate', function() {
+          const ctime = (new Date()).getTime()
+
+          if (ctime - ntime < 980) return
+
+          ntime = ctime
+
           commit({
             type: 'M_player',
             tag: 'updateCurrentTime',
