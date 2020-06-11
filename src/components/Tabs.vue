@@ -31,13 +31,18 @@ export default {
   data() {
     return {
       active: this.tabsActive,
-      tabsLiWidth: 0
+      tabsLiWidth: 0,
+      scrollPos: 0,
     }
   },
   computed: {
     offsetBar() {
       return this.tabsLiWidth * this.active + this.tabsLiWidth / 2 - 14
     }
+  },
+  activated() {
+    // 回到该页时恢复tabs滚动条位置
+    this.$refs.wrapper.scrollLeft = this.scrollPos
   },
   mounted() {
     const self = this
@@ -60,15 +65,19 @@ export default {
   },
   methods: {
     tabsSwitch(index) {
-
       this.active = index
+
+      const offset = this.offsetBar - screenWidth / 2 + 14
 
       Velocity(this.$refs.container, 'scroll', {
         container: this.$refs.wrapper,
         axis: 'x',
         duration: 350,
         easing: 'ease-out',
-        offset: this.offsetBar - screenWidth / 2 + 14
+        offset,
+        complete: () => {
+          this.scrollPos = offset
+        },
       })
 
       this.$emit('tabClick', index)
