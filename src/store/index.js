@@ -8,9 +8,7 @@ Vue.use(Vuex)
 export default new Vuex.Store({
   state: {
     mvRanking: {
-      list: [],
-      limit: 10,
-      offset: 0,
+      list: {},
       loadingStatus: 'none'
     },
     rankList: [],
@@ -36,13 +34,15 @@ export default new Vuex.Store({
     }
   },
   mutations: {
-    pushMv({ mvRanking }, { data }) {
-      mvRanking.list.push(...data)
-      mvRanking.offset += mvRanking.limit
-    },
-    replaceMv({ mvRanking }, { data }) {
-      mvRanking.list = [...data]
-      mvRanking.offset = mvRanking.limit
+    addMv({ mvRanking: { list } }, { area, data }) {
+      const value = list[area]
+
+      if (value) {
+        value.data.push(...data)
+      } else {
+        Vue.set(list, area, { data, limit: 10, offset: 0 } )
+      }
+      value.offset += value.limit
     },
     playMv({ mvRanking: { list } }, { data, index }) {
       list[index].src = data.url
@@ -103,19 +103,14 @@ export default new Vuex.Store({
     }
   },
   actions: {
-    async loadMv({ commit, state: { mvRanking } }, { area, type = 0 /* 0---首次或加载更多 1---切换tabs*/ }) {
-      // 切换tabs时首先初始化
-      if (type) {
-        mvRanking.list = []
-        mvRanking.offset = 0
-      }
-
+    async loadMv({ commit, state: { mvRanking } }, { area }) {
+      if (mvRanking.list[area]) return
       mvRanking.loadingStatus = 'loading'
       
-      const { limit, offset } = mvRanking
-
+      const { limit, offset } = mvRanking.list[area] || { limit: 10, offset: 0 }
+      
       try {
-        const { data: { data } } = await axios.get(api.apiMvRanking(limit, offset, area == '全部' ? '' : area))
+        const { data: { data } } = await axios.get(api.apiMvRanking(limit, offset, area))
 
         for (const item of data) {
           // 对mv数组的每一项添加src属性用于控制播放
@@ -124,8 +119,7 @@ export default new Vuex.Store({
 
         mvRanking.loadingStatus = 'none'
 
-        if (!type) commit('pushMv', { data })
-        else commit('replaceMv', { data })
+        commit('addMv', { area, data })
       } catch(e) {
         mvRanking.loadingStatus = String(e)
       }

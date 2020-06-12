@@ -1,8 +1,8 @@
 <template>
   <div class="container" style="background-color: #f7f7f7;">
     <Tabs :tabsActive="tabsActive" :tabs="tabs" @tabClick="tabClick" />
-    <ul class="mv" v-if="mvRanking.list.length">
-      <li v-for="(item, index) of mvRanking.list" :key="item.id">
+    <ul class="mv" v-if="list">
+      <li v-for="(item, index) of list.data" :key="item.id">
         <div class="mv-bd">
           <video :src="isComplete(item.src) ? item.src : false" :controls="isComplete(item.src)" :poster="item.cover" playsinline autoplay>
             <p>Sorry, your browser doesn't support embedded videos.</p>
@@ -53,11 +53,11 @@ export default {
       'mvRanking'
     ]),
     list() {
-      return this.mvRanking.list
+      return this.mvRanking.list[this.tabs[this.tabsActive]]
     }
   },
   created() {
-    this.loadMv({ area: this.tabs[this.tabsActive], type: 0 })
+    this.loadMv({ area: this.tabs[this.tabsActive] })
   },
   mounted() {
     const io = new IntersectionObserver((entries) => {
@@ -91,7 +91,7 @@ export default {
     },
     tabClick(index) {
       this.tabsActive = index
-      this.loadMv({ area: this.tabs[index], type: 1 })
+      this.loadMv({ area: this.tabs[index] })
     },
     createVideoIo() {
       return new IntersectionObserver((entries) => {
@@ -110,19 +110,19 @@ export default {
     }
   },
   watch: {
-    list(n) {
-      if (n.length) {
-        this.$nextTick(() => {
-          let i = this.mvRanking.offset - 10
-          const lis = document.querySelectorAll('.mv li')
+    list() {
+      // if (n.length) {
+      //   this.$nextTick(() => {
+      //     let i = this.mvRanking.offset - 10
+      //     const lis = document.querySelectorAll('.mv li')
 
-          this.vio.disconnect()
+      //     this.vio.disconnect()
 
-          for (i; i < lis.length; i++) {
-            this.vio.observe(lis[i])
-          }
-        })
-      }
+      //     for (i; i < lis.length; i++) {
+      //       this.vio.observe(lis[i])
+      //     }
+      //   })
+      // }
     }
   }
 }
