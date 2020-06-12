@@ -149,8 +149,8 @@ export default {
       flex: 1;
       overflow: hidden;
       li {
-        height: .84rem;
-        line-height: .84rem;
+        height: .88rem;
+        line-height: .88 rem;
         font-size: 14px;
         color: #676767;
         white-space: nowrap;

@@ -254,7 +254,7 @@ export default {
   }
 }
 .hot-search {
-  padding: .3rem .5rem;
+  padding: .3rem 20px;
   background-color: #fff;
   > h5 {
     font-size: 15px;
