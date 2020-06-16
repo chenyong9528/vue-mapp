@@ -1,5 +1,5 @@
 export default {
-  apiMvRanking: (limit = 30, offset = 0, area) => `/top/mv?limit=${limit}&offset=${offset}&area=${area == '全部' ? '' : area}`,
+  apiMvRanking: (area, offset = 0, limit = 10) => `/top/mv?limit=${limit}&offset=${offset}&area=${area}`,
   apiMvUrl: (id) => `/mv/url?id=${id}`,
   apiRankList: () => `/toplist/detail`,
   apiTopList: (idx) => `/top/list?idx=${idx}`,

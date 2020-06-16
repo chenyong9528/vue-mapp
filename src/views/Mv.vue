@@ -1,24 +1,20 @@
 <template>
-  <div class="container" style="background-color: #f7f7f7;">
+  <div class="container container-mv">
     <Tabs :tabsActive="tabsActive" :tabs="tabs" @tabClick="tabClick" />
     <ul class="mv" v-if="list">
-      <li v-for="(item, index) of list.data" :key="item.id">
+      <li v-for="item of list.data" :key="item.id">
         <div class="mv-bd">
-          <video :src="isComplete(item.src) ? item.src : false" :controls="isComplete(item.src)" :poster="item.cover" playsinline autoplay>
-            <p>Sorry, your browser doesn't support embedded videos.</p>
-          </video>
-          <template v-if="!item.src">
-            <svg class="icon" aria-hidden="true" @click="play(item.id, index, $event)">
-              <use xlink:href="#icon-play-fill"></use>
+          <video :poster="item.cover" playsinline autoplay></video>
+          <svg class="icon" aria-hidden="true" @click="play(item.id, $event)">
+            <use xlink:href="#icon-play-fill"></use>
+          </svg>
+          <i class="icon-loading mv-loading"></i>
+          <div class="mv-playCount">
+            <svg class="icon" aria-hidden="true">
+              <use xlink:href="#icon-play"></use>
             </svg>
-            <div class="mv-playCount">
-              <svg class="icon" aria-hidden="true">
-                <use xlink:href="#icon-play"></use>
-              </svg>
-              <span>{{ item.playCount }}</span>
-            </div>
-          </template>
-          <i v-else-if="item.src == 'loading'" class="icon-loading mv-loading"></i>
+            <span>{{ item.playCount }}</span>
+          </div>
         </div>
         <div class="mv-ft">
           <h2>{{ item.name }}</h2>
@@ -31,7 +27,9 @@
   </div>
 </template>
 <script>
-import { mapState, mapActions } from 'vuex'
+import { mapState, mapMutations, mapActions } from 'vuex'
+import axios from '@/http/axios'
+import api from '@/http/api'
 import Tabs from '@/components/Tabs.vue'
 import LoadingLocal from '@/components/LoadingLocal.vue'
 
@@ -40,24 +38,24 @@ export default {
   data() {
     return {
       tabsActive: 0,
-      tabs: ['全部', '内地', '港台', '欧美', '日本', '韩国'],
-      vio: null
+      tabs: ['内地', '港台', '欧美', '日本', '韩国'],
+      vio: null,
     }
   },
   components: {
     Tabs,
-    LoadingLocal
+    LoadingLocal,
   },
   computed: {
     ...mapState([
-      'mvRanking'
+      'mvRanking',
     ]),
     list() {
-      return this.mvRanking.list[this.tabs[this.tabsActive]]
-    }
+      return this.mvRanking.list[this.tabsActive]
+    },
   },
   created() {
-    this.loadMv({ area: this.tabs[this.tabsActive] })
+    this.loadMv({ index: this.tabsActive })
   },
   mounted() {
     const io = new IntersectionObserver((entries) => {
@@ -66,7 +64,7 @@ export default {
 
         if (this.mvRanking.loadingStatus == 'loading') return
 
-        this.loadMv({ area: this.tabs[this.tabsActive], type: 0 })
+        this.loadMv({ index: this.tabsActive })
       }
     }, {
       threshold: [1],
@@ -81,22 +79,48 @@ export default {
   methods: {
     ...mapActions([
       'loadMv',
-      'asyncMvDetail'
     ]),
-    play(id, index, e) {
-      this.asyncMvDetail({ id, index, el: e.currentTarget.previousElementSibling })
-    },
-    isComplete(src) {
-      return Boolean(src && src != 'loading')
+    ...mapMutations(['setToast']),
+    async play(id, e) {
+      const target = e.currentTarget
+      const video = target.previousElementSibling
+      const i = target.nextElementSibling
+      const div = i.nextElementSibling
+
+      target.style.display = 'none'
+      div.style.display = 'none'
+      i.style.display = 'block'
+
+      try {
+        const { data: { data: { url } } } = await axios.get(api.apiMvUrl(id))
+        
+        video.src = url
+        video.load()
+        video.play()
+        i.style.display = 'none'
+        video.controls = true
+      } catch(e) {
+        this.setToast(String(e))
+      }
     },
     tabClick(index) {
+      const prevIndex = this.tabsActive
+      const vs = document.querySelectorAll('video')
+
+      for (const v of vs) {
+        if (v.src) {
+          v.pause()
+          v.removeAttribute('src')
+          v.load()
+        }
+      }
       this.tabsActive = index
-      this.loadMv({ area: this.tabs[index] })
+      this.loadMv({ index, prevIndex })
     },
     createVideoIo() {
       return new IntersectionObserver((entries) => {
         const item = entries[0]
-        const video = item.target.firstElementChild.firstElementChild
+        const video = item.target
 
         if (item.isIntersecting) {
           if (!isNaN(video.duration)) video.play()
@@ -104,31 +128,34 @@ export default {
           if (!video.paused) video.pause()
         }
       }, {
-        threshold: [0.5],
+        threshold: [0.7],
         rootMargin: '0px 0px 0px 0px',
       })
     }
   },
   watch: {
-    list() {
-      // if (n.length) {
-      //   this.$nextTick(() => {
-      //     let i = this.mvRanking.offset - 10
-      //     const lis = document.querySelectorAll('.mv li')
+    list(n) {
+      if (n) {
+        this.$nextTick(() => {
+          let i = 0
+          const vs = document.querySelectorAll('video')
 
-      //     this.vio.disconnect()
+          this.vio.disconnect()
 
-      //     for (i; i < lis.length; i++) {
-      //       this.vio.observe(lis[i])
-      //     }
-      //   })
-      // }
+          for (i; i < vs.length; i++) {
+            this.vio.observe(vs[i])
+          }
+        })
+      }
     }
   }
 }
 
 </script>
 <style lang="scss">
+.container-mv {
+  background-color: #f7f7f7;
+}
 .mv {
   min-height: 100vh;
   box-sizing: border-box;
@@ -166,6 +193,7 @@ export default {
     }
   }
   &-loading {
+    display: none;
     position: absolute;
     left: 50%;
     top: 50%;

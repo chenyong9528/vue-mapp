@@ -34,18 +34,16 @@ export default new Vuex.Store({
     }
   },
   mutations: {
-    addMv({ mvRanking: { list } }, { area, data }) {
-      const value = list[area]
+    addMv({ mvRanking, mvRanking: { list } }, { index, data }) {
+      const _data = list[index]?.data
 
-      if (value) {
-        value.data.push(...data)
+      // 载入过的tabs，做加载更多操作，否则新增一项
+      if (_data) {
+        _data.push(...data)
+        list[index].offset += 10
       } else {
-        Vue.set(list, area, { data, limit: 10, offset: 0 } )
+        mvRanking.list = { ...list, ...{ [index]: { data, offset: 10 } } }
       }
-      value.offset += value.limit
-    },
-    playMv({ mvRanking: { list } }, { data, index }) {
-      list[index].src = data.url
     },
     setFooter(state, tag) {
       state.footerOffset = tag
@@ -103,41 +101,38 @@ export default new Vuex.Store({
     }
   },
   actions: {
-    async loadMv({ commit, state: { mvRanking } }, { area }) {
-      if (mvRanking.list[area]) return
+    async loadMv({ commit, state: { mvRanking, mvRanking: { list } } }, { index, prevIndex }) {
+      const doc = document.documentElement || document.body
+
+      if (prevIndex !== undefined) {
+        // 切换tabs时保存滚动条位置
+        list[prevIndex].scrollTop = doc.scrollTop
+        if (list[index]) {
+          // 切换tabs并且已经载入过了
+          doc.scrollTop = list[index].scrollTop
+          return
+        }
+      }
+
       mvRanking.loadingStatus = 'loading'
       
-      const { limit, offset } = mvRanking.list[area] || { limit: 10, offset: 0 }
-      
-      try {
-        const { data: { data } } = await axios.get(api.apiMvRanking(limit, offset, area))
+      const offset = list[index]?.offset
+      const tabs = {
+        0: '内地',
+        1: '港台',
+        2: '欧美',
+        3: '日本',
+        4: '韩国',
+      }
 
-        for (const item of data) {
-          // 对mv数组的每一项添加src属性用于控制播放
-          Object.assign(item, { src: '' })
-        }
+      try {
+        const { data: { data } } = await axios.get(api.apiMvRanking(tabs[index], offset))
 
         mvRanking.loadingStatus = 'none'
 
-        commit('addMv', { area, data })
+        commit('addMv', { index, data })
       } catch(e) {
         mvRanking.loadingStatus = String(e)
-      }
-    },
-    async asyncMvDetail({ commit, state: { mvRanking: { list } } }, { id, index, el }) {
-      list[index].src = 'loading'
-
-      try {
-        const { data: { data } } = await axios.get(api.apiMvUrl(id))
-        commit('playMv', { data, index, el })
-
-        setTimeout(() => {
-          el.load()
-          el.play()
-        }, 0)
-      } catch(e) {
-        commit('setToast', String(e))
-        list[index].src = ''
       }
     },
     async loadRankList({ commit, state }) {
