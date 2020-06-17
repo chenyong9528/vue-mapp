@@ -2,7 +2,7 @@
   <div class="container container-mv">
     <Tabs :tabsActive="tabsActive" :tabs="tabs" @tabClick="tabClick" />
     <ul class="mv" v-if="list">
-      <li v-for="item of list.data" :key="item.id">
+      <li v-for="item of list" :key="item.id">
         <div class="mv-bd">
           <video :poster="item.cover" playsinline autoplay></video>
           <svg class="icon" aria-hidden="true" @click="play(item.id, $event)">
@@ -40,6 +40,7 @@ export default {
       tabsActive: 0,
       tabs: ['内地', '港台', '欧美', '日本', '韩国'],
       vio: null,
+      vs: [],
     }
   },
   components: {
@@ -51,7 +52,7 @@ export default {
       'mvRanking',
     ]),
     list() {
-      return this.mvRanking.list[this.tabsActive]
+      return this.mvRanking.list[this.tabsActive]?.data
     },
   },
   created() {
@@ -87,8 +88,8 @@ export default {
       const i = target.nextElementSibling
       const div = i.nextElementSibling
 
-      target.style.display = 'none'
-      div.style.display = 'none'
+      target.remove()
+      div.remove()
       i.style.display = 'block'
 
       try {
@@ -97,23 +98,27 @@ export default {
         video.src = url
         video.load()
         video.play()
-        i.style.display = 'none'
+        i.remove()
         video.controls = true
+        // 把播放过的视频存起来，切换tabs时把它们从内存中清除
+        this.vs.push(video)
       } catch(e) {
         this.setToast(String(e))
       }
     },
     tabClick(index) {
-      const prevIndex = this.tabsActive
-      const vs = document.querySelectorAll('video')
-
-      for (const v of vs) {
-        if (v.src) {
+      if (this.vs.length) {
+        // 清除播放过的视频
+        for (const v of this.vs) {
           v.pause()
           v.removeAttribute('src')
           v.load()
         }
+        this.vs = []
       }
+
+      const prevIndex = this.tabsActive
+      
       this.tabsActive = index
       this.loadMv({ index, prevIndex })
     },
@@ -135,18 +140,16 @@ export default {
   },
   watch: {
     list(n) {
-      if (n) {
-        this.$nextTick(() => {
-          let i = 0
-          const vs = document.querySelectorAll('video')
+      if (!n) return
+      this.$nextTick(() => {
+        const vs = document.querySelectorAll('video')
 
-          this.vio.disconnect()
+        this.vio.disconnect()
 
-          for (i; i < vs.length; i++) {
-            this.vio.observe(vs[i])
-          }
-        })
-      }
+        for (const v of vs) {
+          this.vio.observe(v)
+        }
+      })
     }
   }
 }

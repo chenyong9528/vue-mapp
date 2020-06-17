@@ -29,7 +29,7 @@
     <section class="top-list-section">
       <header class="top-list-header">
         <div>
-          <p :style="{ transform: `translateY(${ tag ? '-100%' : 0 })` }">
+          <p :style="{ transform: `translateY(${ mark ? '-100%' : 0 })` }">
             <svg class="icon" aria-hidden="true">
               <use xlink:href="#icon-play"></use>
             </svg>
@@ -68,7 +68,7 @@ export default {
   data() {
     return {
       playlist: null,
-      tag: false,
+      mark: false,
     }
   },
   async created() {
@@ -83,7 +83,7 @@ export default {
 
     const io = new IntersectionObserver((entries) => {
 
-      this.tag = !entries[0].isIntersecting
+      this.mark = !entries[0].isIntersecting
 
     }, {
       threshold: [0],
