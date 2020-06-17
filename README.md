@@ -44,6 +44,6 @@ $ npm run serve
 
 ## 预览
 
-![Mv](https://img-cdn.7typ.cn/FjgLdmBiSkUJweCGi5IrgGb9dJAW)
-![排行](https://img-cdn.7typ.cn/FpaM8buYERQXb_XvWY8kaPkWUrJX)
-![搜索](https://img-cdn.7typ.cn/FruCznDtosxoDoOSMyLQBFNNb_Ws)
+![Mv](https://img-cdn.7typ.cn/FhiHq3zeV3KUiFYAWw4NBvGcCy1y)
+![排行](https://img-cdn.7typ.cn/lnYiiCygmUmZJ5soZfjfzY1JAlw3)
+![搜索](https://img-cdn.7typ.cn/lnLKtr7O0g82Ziu05qQDinvSpjiz)
