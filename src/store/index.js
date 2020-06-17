@@ -8,13 +8,12 @@ Vue.use(Vuex)
 export default new Vuex.Store({
   state: {
     mvRanking: {
-      list: [],
-      limit: 10,
-      offset: 0,
+      list: {},
       loadingStatus: 'none'
     },
     rankList: [],
-    showFooter: true,
+    footerOffset: 0, // 0 1 2 footer的三种显示状态
+    beforeFooterState: 0,
     globalLoading: false,
     toastText: '',
     player: {
@@ -35,19 +34,19 @@ export default new Vuex.Store({
     }
   },
   mutations: {
-    pushMv({ mvRanking }, { data }) {
-      mvRanking.list.push(...data)
-      mvRanking.offset += mvRanking.limit
+    addMv({ mvRanking, mvRanking: { list } }, { index, data }) {
+      const _data = list[index]?.data
+
+      // 载入过的tabs，做加载更多操作，否则新增一项
+      if (_data) {
+        _data.push(...data)
+        list[index].offset += 10
+      } else {
+        mvRanking.list = { ...list, ...{ [index]: { data, offset: 10 } } }
+      }
     },
-    replaceMv({ mvRanking }, { data }) {
-      mvRanking.list = [...data]
-      mvRanking.offset = mvRanking.limit
-    },
-    playMv({ mvRanking: { list } }, { data, index }) {
-      list[index].src = data.url
-    },
-    setFooter(state, isShow) {
-      state.showFooter = isShow
+    setFooter(state, tag) {
+      state.footerOffset = tag
     },
     setGLoading(state, isShow) {
       state.globalLoading = isShow
@@ -55,7 +54,9 @@ export default new Vuex.Store({
     setToast(state, str) {
       state.toastText = str
     },
-    M_player({ player }, { tag, playload }) {
+    M_player(state, { tag, playload }) {
+      const { player } = state
+
       const o = {
         playAudio() {
           player.isPlay = true
@@ -69,8 +70,8 @@ export default new Vuex.Store({
         initEndTime(endTime) {
           player.endTime = endTime
         },
-        pushQueue({ id, name, ar, al, songs }) {
-          player.queue.push({ id, name, ar, al, songs })
+        pushQueue({ id, name, ar, al, songs, lyric }) {
+          player.queue.push({ id, name, ar, al, songs, lyric })
         },
         switchAudio(current) {
           player.queueActive = current
@@ -79,8 +80,17 @@ export default new Vuex.Store({
           player.currentTime = 0
           player.endTime = 1
         },
-        playModel(b) {
-          player.isFull = b
+        playModel() {
+          // 打开播放器时，处理footer动画
+          if (!player.isFull) {
+            state.beforeFooterState = state.footerOffset
+            state.footerOffset = 2
+          } else {
+            setTimeout(() => {
+              state.footerOffset = state.beforeFooterState
+            }, 400)
+          }
+          player.isFull = !player.isFull
         },
         initAudioInstance(instance) {
           player.instance = instance
@@ -91,47 +101,38 @@ export default new Vuex.Store({
     }
   },
   actions: {
-    async loadMv({ commit, state: { mvRanking } }, { area, type = 0 /* 0---首次或加载更多 1---切换tabs*/ }) {
-      // 切换tabs时首先初始化
-      if (type) {
-        mvRanking.list = []
-        mvRanking.offset = 0
+    async loadMv({ commit, state: { mvRanking, mvRanking: { list } } }, { index, prevIndex }) {
+      const doc = document.documentElement || document.body
+
+      if (prevIndex !== undefined) {
+        // 切换tabs时保存滚动条位置
+        list[prevIndex].scrollTop = doc.scrollTop
+        if (list[index]) {
+          // 切换tabs并且已经载入过了
+          doc.scrollTop = list[index].scrollTop
+          return
+        }
       }
 
       mvRanking.loadingStatus = 'loading'
       
-      const { limit, offset } = mvRanking
+      const offset = list[index]?.offset
+      const tabs = {
+        0: '内地',
+        1: '港台',
+        2: '欧美',
+        3: '日本',
+        4: '韩国',
+      }
 
       try {
-        const { data: { data } } = await axios.get(api.apiMvRanking(limit, offset, area == '全部' ? '' : area))
-
-        for (const item of data) {
-          // 对mv数组的每一项添加src属性用于控制播放
-          Object.assign(item, { src: '' })
-        }
+        const { data: { data } } = await axios.get(api.apiMvRanking(tabs[index], offset))
 
         mvRanking.loadingStatus = 'none'
 
-        if (!type) commit('pushMv', { data })
-        else commit('replaceMv', { data })
+        commit('addMv', { index, data })
       } catch(e) {
         mvRanking.loadingStatus = String(e)
-      }
-    },
-    async asyncMvDetail({ commit, state: { mvRanking: { list } } }, { id, index, el }) {
-      list[index].src = 'loading'
-
-      try {
-        const { data: { data } } = await axios.get(api.apiMvUrl(id))
-        commit('playMv', { data, index, el })
-
-        setTimeout(() => {
-          el.load()
-          el.play()
-        }, 0)
-      } catch(e) {
-        commit('setToast', String(e))
-        list[index].src = ''
       }
     },
     async loadRankList({ commit, state }) {
@@ -147,15 +148,20 @@ export default new Vuex.Store({
 
       commit({
         type: 'M_player',
-        tag: 'playModel',
-        playload: true
+        tag: 'playModel'
       })
 
       commit('setGLoading', true)
       
       if (index === -1) {
         try {
-          const { data: { data } } = await axios.get(api.apiAudioUrl(item.id))
+          const p1 = axios.get(api.apiAudioUrl(item.id))
+          const p2 = axios.get(api.apiLyric(item.id))
+
+          const [
+            { data: { data } },
+            { data: { lrc: { lyric } } },
+          ] = await Promise.all([p1, p2])
 
           if (data[0].url == null) {
             commit('setGLoading', false)
@@ -166,7 +172,7 @@ export default new Vuex.Store({
           commit({
             type: 'M_player',
             tag: 'pushQueue',
-            playload: Object.assign(item, { songs: data })
+            playload: Object.assign(item, { songs: data, lyric })
           })
 
           index = queue.length - 1
@@ -188,6 +194,7 @@ export default new Vuex.Store({
     switchAudio({ dispatch, commit, state: { player, player: { queue, queueActive, instance } } }) {
       const { songs } = queue[queueActive]
       const url = songs[0].url
+      let ntime = (new Date()).getTime()
 
       if (instance) {
         instance.src = url
@@ -219,6 +226,12 @@ export default new Vuex.Store({
           })
         })
         ad.addEventListener('timeupdate', function() {
+          const ctime = (new Date()).getTime()
+
+          if (ctime - ntime < 980) return
+
+          ntime = ctime
+
           commit({
             type: 'M_player',
             tag: 'updateCurrentTime',

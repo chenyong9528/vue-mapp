@@ -2,7 +2,7 @@
   <div class="tabs-wrapper" ref="wrapper" :style="{ top: `calc(${ top })` }">
     <div class="tabs-container" ref="container">
       <ul class="tabs">
-        <li v-for="(item, index) of tabs" :key="item" :class="{ active: index === active }" @click="tabsSwitch(index)">{{ item }}</li>
+        <li v-for="(item, index) of tabs" :key="item" :class="{ active: index === active }" @click="tabsSwitch(index)"><span>{{ item }}</span></li>
       </ul>
       <span class="tabs-bar" :style="{ transform: `translate3d(${ offsetBar }px, 0, 0)` }"></span>
     </div>
@@ -31,13 +31,18 @@ export default {
   data() {
     return {
       active: this.tabsActive,
-      tabsLiWidth: 0
+      tabsLiWidth: 0,
+      scrollPos: 0,
     }
   },
   computed: {
     offsetBar() {
       return this.tabsLiWidth * this.active + this.tabsLiWidth / 2 - 14
     }
+  },
+  activated() {
+    // 回到该页时恢复tabs滚动条位置
+    this.$refs.wrapper.scrollLeft = this.scrollPos
   },
   mounted() {
     const self = this
@@ -60,15 +65,19 @@ export default {
   },
   methods: {
     tabsSwitch(index) {
-
       this.active = index
+
+      const offset = this.offsetBar - screenWidth / 2 + 14
 
       Velocity(this.$refs.container, 'scroll', {
         container: this.$refs.wrapper,
         axis: 'x',
         duration: 350,
         easing: 'ease-out',
-        offset: this.offsetBar - screenWidth / 2 + 14
+        offset,
+        complete: () => {
+          this.scrollPos = offset
+        },
       })
 
       this.$emit('tabClick', index)
@@ -120,19 +129,25 @@ export default {
 .tabs {
   display: flex;
   width: max-content;
-  font-size: 15px;
   background-color: #fff;
   li {
     width: 3rem;
-    padding: .3rem;
+    height: 1.38rem;
     flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font-size: 16px;
-    text-align: center;
-    box-sizing: border-box;
     background-color: #fff;
     -webkit-tap-highlight-color: transparent;
+    span {
+      transition: transform .35s;
+    }
     &.active {
       color: var(--T-0);
+      span {
+        transform: scale(1.2);
+      }
     }
   }
 }

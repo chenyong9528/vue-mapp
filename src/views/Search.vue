@@ -214,7 +214,7 @@ export default {
   display: flex;
   align-items: flex-start;
   height: 2.4rem;
-  padding: .9rem .6rem 0;
+  padding: .9rem 20px 0;
   background-color: #fff;
   box-sizing: border-box;
   position: sticky;
@@ -224,23 +224,23 @@ export default {
     flex: 1;
     display: flex;
     align-items: center;
-    padding: 0 .2rem;
-    border-radius: .3rem;
+    padding: 0 6px;
+    border-radius: .1rem;
     overflow: hidden;
     background-color: #eeeeef;
     .icon {
-      width: .88rem;
-      height: .88rem;
+      width: 27px;
+      height: 27px;
       color: #8e8e92;
     }
     input {
       flex: 1;
-      padding: .26rem .12rem;
+      padding: .26rem 4px;
       font-size: 16px;
       border: none;
       outline: none;
       background-color: transparent;
-      // caret-color: #333;
+      caret-color: var(--T-0);
     }
   }
   &-cancel {
@@ -254,7 +254,7 @@ export default {
   }
 }
 .hot-search {
-  padding: .3rem .5rem;
+  padding: .3rem 20px;
   background-color: #fff;
   > h5 {
     font-size: 15px;

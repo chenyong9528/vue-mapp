@@ -37,7 +37,7 @@ router.beforeEach((to, from, next) => {
   const navName = ['Mv', 'Ranking', 'Search']
   const isToNav = navName.some((curr) => curr === to.name)
 
-  store.commit('setFooter', isToNav)
+  store.commit('setFooter', isToNav ? 0 : 1)
   
   next()
 })
