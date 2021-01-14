@@ -64,7 +64,7 @@ import api from '@/http/api'
 
 export default {
   name: 'Top',
-  props: ['idx'],
+  props: ['id'],
   data() {
     return {
       playlist: null,
@@ -74,7 +74,7 @@ export default {
   async created() {
     this.$loading.show()
     try {
-      const { data: { playlist } } = await axios.get(api.apiTopList(this.idx))
+      const { data: { playlist } } = await axios.get(api.apiTopList(this.id))
       this.playlist = Object.freeze(playlist)
     } catch(e) {
       this.setToast(String(e))

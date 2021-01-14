@@ -2,7 +2,7 @@ export default {
   apiMvRanking: (area, offset = 0, limit = 10) => `/top/mv?limit=${limit}&offset=${offset}&area=${area}`,
   apiMvUrl: (id) => `/mv/url?id=${id}`,
   apiRankList: () => `/toplist/detail`,
-  apiTopList: (idx) => `/top/list?idx=${idx}`,
+  apiTopList: (id) => `/playlist/detail?id=${id}`,
   apiAudioUrl: (id) => `/song/url?id=${id}`,
   apiLyric: (id) => `/lyric?id=${id}`,
   apiSongDetail: (id) => `/song/detail?ids=${id}`,

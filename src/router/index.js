@@ -22,7 +22,7 @@ Vue.use(VueRouter)
     component: () => import('../views/Search.vue')
   },
   {
-    path: '/top/:idx',
+    path: '/top/:id',
     name: 'Top',
     props: true,
     component: () => import('../views/Top.vue')
