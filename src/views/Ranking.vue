@@ -5,7 +5,7 @@
       <dd>
         <ul class="rank-follow">
           <li v-for="item of g_rankList(1)" :key="item.id">
-            <router-link :to="getUrl(item.name)" class="rank-follow-link" replace>
+            <router-link :to="`/top/${item.id}`" class="rank-follow-link" replace>
               <div class="rank-header">
                 <img :src="item.coverImgUrl">
                 <span>{{ item.updateFrequency }}</span>
@@ -23,7 +23,7 @@
       <dd>
         <ul class="rank-other">
           <li v-for="item of g_rankList(0)" :key="item.id">
-            <router-link :to="getUrl(item.name)" class="rank-other-link" replace>
+            <router-link :to="`/top/${item.id}`" class="rank-other-link" replace>
               <div class="rank-header">
                 <img :src="item.coverImgUrl">
                 <span>{{ item.updateFrequency }}</span>
@@ -38,38 +38,6 @@
 </template>
 <script>
 import { mapGetters, mapActions } from 'vuex'
-
-const arr = [
-  '云音乐新歌榜',
-  '云音乐热歌榜',
-  '网易原创歌曲榜',
-  '云音乐飙升榜',
-  '4',
-  'UK排行榜周榜',
-  '美国Billboard周榜',
-  'KTV唛榜',
-  'iTunes榜',
-  'Hit FM Top榜',
-  '日本Oricon周榜',
-  '11',
-  '12',
-  '13',
-  '14',
-  '15',
-  '16',
-  '17',
-  '18',
-  '法国 NRJ Vos Hits 周榜',
-  '台湾Hito排行榜',
-  'Beatport全球电子舞曲榜',
-  '云音乐ACG音乐榜',
-  '云音乐说唱榜',
-  '云音乐古典音乐榜',
-  '云音乐电音榜',
-  '抖音排行榜',
-  '新声榜',
-  '云音乐韩语榜'
-]
 
 export default {
   name: 'Ranking',
@@ -87,13 +55,7 @@ export default {
   methods: {
     ...mapActions([
       'loadRankList'
-    ]),
-    getUrl(name) {
-      const idx = arr.findIndex(curr => curr == name)
-
-      if (idx !== -1) return `/top/${idx}`
-      return `#`
-    }
+    ])
   }
 }
 
